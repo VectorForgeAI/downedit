@@ -1,6 +1,6 @@
 {
   "name": "downedit-pwa",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "down.edit Progressive Web App - A privacy-first Markdown editor",
   "private": true,
   "type": "module",
