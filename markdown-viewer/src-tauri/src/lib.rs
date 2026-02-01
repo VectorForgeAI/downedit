@@ -15,6 +15,12 @@ fn write_file(path: &str, content: &str) -> Result<(), String> {
     fs::write(path, content).map_err(|e| e.to_string())
 }
 
+// Write binary content to a file (for PDF, DOCX, etc.)
+#[tauri::command]
+fn write_binary_file(path: &str, data: Vec<u8>) -> Result<(), String> {
+    fs::write(path, data).map_err(|e| e.to_string())
+}
+
 // Get file name from path
 #[tauri::command]
 fn get_file_name(path: &str) -> String {
@@ -56,10 +62,26 @@ async fn open_file_dialog(app: tauri::AppHandle) -> Result<Vec<String>, String> 
 async fn save_file_dialog(app: tauri::AppHandle, default_name: &str) -> Result<Option<String>, String> {
     let (tx, rx) = mpsc::channel();
 
-    app.dialog()
-        .file()
-        .add_filter("Markdown", &["md", "markdown"])
-        .add_filter("Text", &["txt"])
+    // Determine file type from extension
+    let extension = Path::new(default_name)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("md");
+
+    let mut dialog = app.dialog().file();
+
+    // Add appropriate filter based on file type
+    dialog = match extension.to_lowercase().as_str() {
+        "pdf" => dialog.add_filter("PDF Document", &["pdf"]),
+        "docx" => dialog.add_filter("Word Document", &["docx"]),
+        "html" | "htm" => dialog.add_filter("HTML Document", &["html", "htm"]),
+        "txt" => dialog.add_filter("Text File", &["txt"]),
+        _ => dialog
+            .add_filter("Markdown", &["md", "markdown"])
+            .add_filter("Text", &["txt"]),
+    };
+
+    dialog
         .set_file_name(default_name)
         .save_file(move |file_path| {
             let path = file_path.map(|p| p.to_string());
@@ -96,6 +118,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             read_file,
             write_file,
+            write_binary_file,
             get_file_name,
             open_file_dialog,
             save_file_dialog,

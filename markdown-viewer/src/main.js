@@ -1097,19 +1097,23 @@ async function exportToPdf() {
 
   const theme = document.getElementById('pdf-theme').value;
   const pageSize = document.getElementById('pdf-pagesize').value;
-  const margin = parseInt(document.getElementById('pdf-margin').value) || 20;
+  const marginInches = parseFloat(document.getElementById('pdf-margin').value) || 1;
   const fontSize = parseInt(document.getElementById('pdf-fontsize').value) || 11;
   const lineHeight = parseFloat(document.getElementById('pdf-lineheight').value) || 1.5;
 
   closeDialog('pdf-dialog');
 
-  // Get page dimensions
+  // Convert inches to mm (1 inch = 25.4mm)
+  const margin = marginInches * 25.4;
+
+  // Get page dimensions in mm
   const pageSizes = {
-    a4: [210, 297],
-    letter: [216, 279],
-    legal: [216, 356]
+    letter: [215.9, 279.4],  // 8.5 x 11 inches
+    legal: [215.9, 355.6],   // 8.5 x 14 inches
+    tabloid: [279.4, 431.8], // 11 x 17 inches
+    a4: [210, 297]
   };
-  const [pageWidth, pageHeight] = pageSizes[pageSize] || pageSizes.a4;
+  const [pageWidth, pageHeight] = pageSizes[pageSize] || pageSizes.letter;
 
   // Theme colors
   const themes = {
@@ -1232,17 +1236,43 @@ async function exportToPdf() {
     }
   }
 
-  // Save PDF
-  const fileName = tab.fileName.replace(/\.(md|markdown|txt)$/, '') + '.pdf';
-  pdf.save(fileName);
+  // Save PDF using Tauri save dialog
+  const defaultFileName = tab.fileName.replace(/\.(md|markdown|txt)$/, '') + '.pdf';
+  
+  try {
+    const filePath = await invoke('save_file_dialog', { defaultName: defaultFileName });
+    if (filePath) {
+      // Get PDF as array buffer
+      const pdfOutput = pdf.output('arraybuffer');
+      const uint8Array = new Uint8Array(pdfOutput);
+      
+      // Write to file using Tauri
+      await invoke('write_binary_file', { path: filePath, data: Array.from(uint8Array) });
+    }
+  } catch (err) {
+    // Fallback to browser download if Tauri not available
+    console.log('Using browser download fallback:', err);
+    pdf.save(defaultFileName);
+  }
 }
 
 // DOCX Export
-async function exportToDocx() {
+function openDocxDialog() {
   closeExportMenu();
+  openDialog('docx-dialog');
+}
 
+async function exportToDocx() {
   const tab = state.tabs.find(t => t.id === state.activeTabId);
   if (!tab) return;
+
+  const pageSize = document.getElementById('docx-pagesize').value;
+  const marginInches = parseFloat(document.getElementById('docx-margin').value) || 1;
+
+  closeDialog('docx-dialog');
+
+  // Convert inches to twips (1 inch = 1440 twips)
+  const marginTwips = marginInches * 1440;
 
   const content = tab.content;
   const lines = content.split('\n');
@@ -1384,6 +1414,14 @@ async function exportToDocx() {
     }
   }
 
+  // Page size dimensions in twips (1 inch = 1440 twips)
+  const pageSizesDocx = {
+    letter: { width: 12240, height: 15840 },  // 8.5 x 11 inches
+    legal: { width: 12240, height: 20160 },   // 8.5 x 14 inches
+    a4: { width: 11906, height: 16838 }       // 210 x 297 mm
+  };
+  const docPageSize = pageSizesDocx[pageSize] || pageSizesDocx.letter;
+
   // Create document
   const doc = new Document({
     numbering: {
@@ -1398,23 +1436,47 @@ async function exportToDocx() {
       }],
     },
     sections: [{
+      properties: {
+        page: {
+          size: docPageSize,
+          margin: {
+            top: marginTwips,
+            right: marginTwips,
+            bottom: marginTwips,
+            left: marginTwips,
+          },
+        },
+      },
       children: children,
     }],
   });
 
-  // Generate and download
+  // Generate file
   const blob = await Packer.toBlob(doc);
-  const fileName = tab.fileName.replace(/\.(md|markdown|txt)$/, '') + '.docx';
+  const defaultFileName = tab.fileName.replace(/\.(md|markdown|txt)$/, '') + '.docx';
 
-  // Create download link
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  try {
+    const filePath = await invoke('save_file_dialog', { defaultName: defaultFileName });
+    if (filePath) {
+      // Convert blob to array
+      const arrayBuffer = await blob.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      // Write to file using Tauri
+      await invoke('write_binary_file', { path: filePath, data: Array.from(uint8Array) });
+    }
+  } catch (err) {
+    // Fallback to browser download if Tauri not available
+    console.log('Using browser download fallback:', err);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = defaultFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 }
 
 // Parse inline markdown formatting
@@ -1478,42 +1540,28 @@ function parseInlineFormatting(text) {
 }
 
 // HTML Export
-async function exportToHtml() {
+function openHtmlDialog() {
   closeExportMenu();
+  openDialog('html-dialog');
+}
 
+async function exportToHtml() {
   const tab = state.tabs.find(t => t.id === state.activeTabId);
   if (!tab) return;
+
+  const style = document.getElementById('html-style').value;
+  const includeDarkMode = document.getElementById('html-darkmode').checked;
+
+  closeDialog('html-dialog');
 
   // Generate HTML with styling
   const renderedContent = marked.parse(tab.content);
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(tab.fileName)}</title>
-  <style>
-    :root {
-      --bg-primary: #ffffff;
-      --text-primary: #1a1a1a;
-      --text-secondary: #666666;
-      --accent: #0066cc;
-      --border: #e0e0e0;
-      --code-bg: #f6f8fa;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-primary: #1e1e1e;
-        --text-primary: #e0e0e0;
-        --text-secondary: #a0a0a0;
-        --accent: #4da6ff;
-        --border: #404040;
-        --code-bg: #2d2d2d;
-      }
-    }
-
+  // Build CSS based on options
+  let css = '';
+  
+  if (style !== 'raw') {
+    css = `
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -1595,26 +1643,72 @@ async function exportToHtml() {
       border-top: 1px solid var(--border);
     }
 
-    img { max-width: 100%; height: auto; border-radius: 6px; }
-  </style>
+    img { max-width: 100%; height: auto; border-radius: 6px; }`;
+  }
+
+  // CSS variables
+  let cssVars = `
+    :root {
+      --bg-primary: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --accent: #0066cc;
+      --border: #e0e0e0;
+      --code-bg: #f6f8fa;
+    }`;
+
+  if (includeDarkMode && style !== 'raw') {
+    cssVars += `
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1e1e1e;
+        --text-primary: #e0e0e0;
+        --text-secondary: #a0a0a0;
+        --accent: #4da6ff;
+        --border: #404040;
+        --code-bg: #2d2d2d;
+      }
+    }`;
+  }
+
+  const fullCss = style === 'raw' ? '' : `<style>${cssVars}${css}
+  </style>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(tab.fileName)}</title>
+  ${fullCss}
 </head>
 <body>
 ${renderedContent}
 </body>
 </html>`;
 
-  // Create download
-  const blob = new Blob([html], { type: 'text/html' });
-  const fileName = tab.fileName.replace(/\.(md|markdown|txt)$/, '') + '.html';
+  const defaultFileName = tab.fileName.replace(/\.(md|markdown|txt)$/, '') + '.html';
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  try {
+    const filePath = await invoke('save_file_dialog', { defaultName: defaultFileName });
+    if (filePath) {
+      // Write to file using Tauri
+      await invoke('write_file', { path: filePath, content: html });
+    }
+  } catch (err) {
+    // Fallback to browser download if Tauri not available
+    console.log('Using browser download fallback:', err);
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = defaultFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 }
 
 // File Operations
@@ -2112,13 +2206,15 @@ function initExportListeners() {
     }
   });
 
-  // Export options
+  // Export options - all open dialogs now
   document.getElementById('export-pdf').addEventListener('click', openPdfDialog);
-  document.getElementById('export-docx').addEventListener('click', exportToDocx);
-  document.getElementById('export-html').addEventListener('click', exportToHtml);
+  document.getElementById('export-docx').addEventListener('click', openDocxDialog);
+  document.getElementById('export-html').addEventListener('click', openHtmlDialog);
 
-  // PDF export button in dialog
+  // Export buttons in dialogs
   document.getElementById('pdf-export-btn').addEventListener('click', exportToPdf);
+  document.getElementById('docx-export-btn').addEventListener('click', exportToDocx);
+  document.getElementById('html-export-btn').addEventListener('click', exportToHtml);
 }
 
 // Initialize App
