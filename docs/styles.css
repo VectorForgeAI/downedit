@@ -651,6 +651,34 @@ body {
   transform: translateY(0);
 }
 
+.download-pwa {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  border-color: transparent;
+}
+
+.download-pwa .download-icon {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.download-pwa .download-icon svg,
+.download-pwa .download-platform,
+.download-pwa .download-arrow {
+  color: white;
+}
+
+.download-pwa .download-meta {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.download-pwa .download-arrow {
+  opacity: 1;
+}
+
+.download-pwa:hover {
+  background: linear-gradient(135deg, var(--gradient-end), var(--gradient-start));
+  transform: translateY(-4px);
+}
+
 .download-note {
   text-align: center;
   color: var(--text-muted);

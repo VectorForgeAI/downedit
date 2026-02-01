@@ -5,12 +5,13 @@
 </p>
 
 <p align="center">
-  <strong>A modern, fast, and feature-rich Markdown editor for Windows, macOS, and Linux</strong>
+  <strong>A modern, privacy-first Markdown editor for any device</strong>
 </p>
 
 <p align="center">
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
+  <a href="#pwa-mobile--web">PWA</a> •
   <a href="#usage">Usage</a> •
   <a href="#building-from-source">Build</a> •
   <a href="#contributing">Contributing</a>
@@ -20,7 +21,20 @@
 
 ## Overview
 
-**down.edit** is a lightweight, cross-platform application for viewing, editing, and exporting Markdown files. Built with [Tauri](https://tauri.app/) for blazing-fast performance and a small footprint, it delivers a seamless editing experience with real-time preview, syntax highlighting, and professional export capabilities. Available for Windows, macOS, and Linux.
+**down.edit** is a lightweight, privacy-first Markdown editor available on **every platform**:
+
+| Platform | Version |
+|----------|---------|
+| Windows, macOS, Linux | Desktop app (Tauri) |
+| **iPhone, iPad, Android** | **Progressive Web App (PWA)** |
+| Any browser | Web app |
+
+Built with [Tauri](https://tauri.app/) for desktop and modern PWA standards for mobile, it delivers a seamless editing experience with:
+- Real-time live preview
+- Syntax highlighting for 25+ languages
+- Export to PDF, Word, and HTML
+- **100% offline capability**
+- **Zero data collection** - everything stays on your device
 
 Whether you're writing documentation, taking notes, or creating content, down.edit provides all the tools you need in a clean, distraction-free interface.
 
@@ -93,7 +107,40 @@ Whether you're writing documentation, taking notes, or creating content, down.ed
 
 ---
 
-## Installation
+## PWA (Mobile & Web)
+
+**Use down.edit on your iPhone, iPad, Android device, or any browser!**
+
+### Quick Start
+
+Visit: **[vectorforgeai.github.io/downedit/pwa/](https://vectorforgeai.github.io/downedit/pwa/)**
+
+### Install on iPhone/iPad
+
+1. Open Safari and visit the PWA URL
+2. Tap the **Share** button
+3. Tap **"Add to Home Screen"**
+
+### Install on Android
+
+1. Open Chrome and visit the PWA URL
+2. Tap **"Install"** when prompted (or use menu > Add to Home Screen)
+
+### PWA Features
+
+| Feature | Details |
+|---------|---------|
+| **Works Offline** | Full functionality without internet |
+| **Mobile Layout** | Preview on top, editor on bottom |
+| **Local Storage** | Documents saved in your browser |
+| **Export** | PDF, Word, HTML via Share Sheet |
+| **Zero Cost** | Free hosting on GitHub Pages |
+
+For detailed instructions, see the [PWA User Guide](PWA_USER_GUIDE.md).
+
+---
+
+## Installation (Desktop)
 
 Download the latest release from the [Releases](../../releases) page.
 
@@ -122,7 +169,7 @@ Download the latest release from the [Releases](../../releases) page.
 
 **Requirements:** A modern Linux distribution with GTK 3 and WebKitGTK installed.
 
-### System Requirements (All Platforms)
+### System Requirements (Desktop)
 
 - **RAM:** 100 MB minimum
 - **Disk:** 50 MB for installation
