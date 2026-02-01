@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Downedit",
+  "productName": "down.edit",
   "version": "1.0.0",
   "identifier": "com.vectorforge.downedit",
   "build": {
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Downedit",
+        "title": "down.edit",
         "width": 1200,
         "height": 800,
         "minWidth": 600,

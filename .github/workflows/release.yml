@@ -1,0 +1,192 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            target: linux
+            ext: ''
+            asset_name: down.edit-linux
+          - platform: macos-latest
+            target: macos
+            ext: '.dmg'
+            asset_name: down.edit-macos
+          - platform: windows-latest
+            target: windows
+            ext: '.exe'
+            asset_name: down.edit-windows
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Install Linux dependencies
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install frontend dependencies
+        working-directory: markdown-viewer
+        run: npm ci
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Tauri app
+        working-directory: markdown-viewer
+        run: npm run tauri build
+
+      - name: Prepare Windows artifact
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $source = "markdown-viewer/src-tauri/target/release/down.edit.exe"
+          if (!(Test-Path $source)) {
+            $source = "markdown-viewer/src-tauri/target/release/markdown-viewer.exe"
+          }
+          $dest = "down.edit-$version-windows.exe"
+          Copy-Item $source $dest
+          echo "ARTIFACT_PATH=$dest" >> $env:GITHUB_ENV
+
+      - name: Prepare macOS artifact
+        if: matrix.target == 'macos'
+        shell: bash
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          # Find the DMG file
+          dmg_file=$(find markdown-viewer/src-tauri/target/release/bundle/dmg -name "*.dmg" | head -1)
+          if [ -n "$dmg_file" ]; then
+            dest="down.edit-$version-macos.dmg"
+            cp "$dmg_file" "$dest"
+            echo "ARTIFACT_PATH=$dest" >> $GITHUB_ENV
+          else
+            # Fallback to app bundle
+            app_file=$(find markdown-viewer/src-tauri/target/release/bundle/macos -name "*.app" | head -1)
+            dest="down.edit-$version-macos.app.zip"
+            cd markdown-viewer/src-tauri/target/release/bundle/macos
+            zip -r "../../../../../../$dest" *.app
+            cd ../../../../../..
+            echo "ARTIFACT_PATH=$dest" >> $GITHUB_ENV
+          fi
+
+      - name: Prepare Linux artifact
+        if: matrix.target == 'linux'
+        shell: bash
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          # Prefer AppImage for direct execution
+          appimage=$(find markdown-viewer/src-tauri/target/release/bundle/appimage -name "*.AppImage" 2>/dev/null | head -1)
+          if [ -n "$appimage" ]; then
+            dest="down.edit-$version-linux.AppImage"
+            cp "$appimage" "$dest"
+            chmod +x "$dest"
+            echo "ARTIFACT_PATH=$dest" >> $GITHUB_ENV
+          else
+            # Fallback to deb
+            deb=$(find markdown-viewer/src-tauri/target/release/bundle/deb -name "*.deb" | head -1)
+            dest="down.edit-$version-linux.deb"
+            cp "$deb" "$dest"
+            echo "ARTIFACT_PATH=$dest" >> $GITHUB_ENV
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}-${{ steps.version.outputs.version }}
+          path: ${{ env.ARTIFACT_PATH }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find artifacts -type f -exec cp {} release/ \;
+          ls -la release/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: down.edit v${{ steps.version.outputs.version }}
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', steps.version.outputs.version) || github.ref_name }}
+          draft: false
+          prerelease: false
+          files: release/*
+          body: |
+            ## down.edit v${{ steps.version.outputs.version }}
+            
+            A beautiful Markdown editor with live preview.
+            
+            ### Downloads
+            
+            | Platform | Download |
+            |----------|----------|
+            | Windows | `down.edit-${{ steps.version.outputs.version }}-windows.exe` |
+            | macOS | `down.edit-${{ steps.version.outputs.version }}-macos.dmg` |
+            | Linux | `down.edit-${{ steps.version.outputs.version }}-linux.AppImage` |
+            
+            ### Installation
+            
+            - **Windows**: Download and run the `.exe` file directly
+            - **macOS**: Download the `.dmg`, open it, and drag to Applications
+            - **Linux**: Download the `.AppImage`, make it executable (`chmod +x`), and run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
