@@ -1,11 +1,10 @@
-# MarkdownViewer - Development Documentation
+# down.edit - Development Documentation
 
 ## Project Overview
 
-**Application Name:** MarkdownViewer
-**Framework:** Tauri 2.x (Rust backend + Web frontend)
-**Platform:** Windows
-**Purpose:** A full-featured markdown editor with viewing, editing, and export capabilities (inspired by MarkdownForge)
+**Application Name:** down.edit
+**Platforms:** Desktop (Windows, macOS, Linux) + PWA (iOS, Android, Web)
+**Purpose:** A privacy-first markdown editor with live preview and export capabilities
 
 ---
 
@@ -13,33 +12,114 @@
 
 ### Technology Stack
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| Backend | Rust + Tauri | File I/O, system integration, window management |
-| Frontend | HTML/CSS/JavaScript + Vite | UI rendering, markdown parsing |
-| Markdown | marked.js + highlight.js | GFM parsing and syntax highlighting |
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Desktop Backend | Rust + Tauri 2.x | File I/O, native dialogs |
+| Desktop Frontend | HTML/CSS/JS + Vite | UI rendering |
+| PWA | Vite + Service Worker | Mobile/web version |
+| Markdown | marked.js + highlight.js | GFM parsing |
 | Export | docx.js + jsPDF | Word and PDF generation |
 
 ### Project Structure
 
 ```
-markdown-viewer/
-├── src/                    # Frontend source
-│   ├── main.js             # Core application logic
-│   ├── styles.css          # Styling (theme support)
-├── index.html              # Main HTML (Vite entry)
-├── vite.config.js          # Vite bundler config
-├── src-tauri/              # Rust backend
-│   ├── src/
-│   │   ├── main.rs         # Entry point
-│   │   ├── lib.rs          # Library exports + Tauri commands
-│   ├── Cargo.toml          # Rust dependencies
-│   ├── capabilities/       # Permission configuration
-│   └── tauri.conf.json     # Tauri configuration
-├── package.json            # NPM dependencies
-├── DEVELOPMENT.md          # This file
-└── USER_GUIDE.md           # User documentation
+downedit/
+├── markdown-viewer/          # Desktop app (Tauri + Vite)
+│   ├── src/                  # Frontend source
+│   │   ├── main.js          # Core application logic
+│   │   └── styles.css       # Desktop styling
+│   ├── src-tauri/           # Rust backend
+│   │   ├── src/
+│   │   │   ├── main.rs      # Entry point
+│   │   │   └── lib.rs       # Tauri commands
+│   │   ├── Cargo.toml       # Rust dependencies
+│   │   └── tauri.conf.json  # Tauri configuration
+│   ├── index.html           # HTML entry point
+│   ├── package.json         # NPM dependencies
+│   └── vite.config.js       # Vite bundler config
+│
+├── pwa/                      # Progressive Web App
+│   ├── src/                  # PWA source
+│   │   ├── main.js          # Mobile-optimized app logic
+│   │   └── styles.css       # Mobile-first styling
+│   ├── public/              # Static assets
+│   │   ├── icons/           # PWA icons
+│   │   ├── manifest.json    # PWA manifest
+│   │   └── sw.js            # Service worker
+│   ├── index.html           # PWA entry point
+│   ├── package.json         # NPM dependencies
+│   └── vite.config.js       # Vite config for PWA
+│
+├── docs/                     # GitHub Pages landing site
+├── .github/workflows/       # CI/CD
+│   └── release.yml          # Desktop + PWA release
+│
+├── README.md                 # Main documentation
+├── PWA_USER_GUIDE.md        # PWA user guide
+└── DEVELOPMENT.md           # This file
 ```
+
+---
+
+## PWA Development
+
+### Setup
+
+```bash
+cd pwa
+npm install
+```
+
+### Development Mode
+
+```bash
+npm run dev
+```
+
+Opens at `http://localhost:3000` with hot reloading.
+
+**Mobile Testing:**
+- Dev server is accessible on local network
+- Access from phone: `http://YOUR_IP:3000`
+
+### Building for Production
+
+```bash
+npm run build
+# Output: pwa/dist/
+```
+
+### PWA Features
+
+| Feature | Implementation |
+|---------|----------------|
+| Offline | Service Worker caching |
+| Install | Web App Manifest |
+| Storage | IndexedDB |
+| File Open | File System Access API / input element |
+| File Save | Share API / download |
+
+### Mobile Layout
+
+The PWA uses a vertical split layout optimized for mobile:
+
+```
+┌────────────────────────┐
+│       Toolbar          │
+├────────────────────────┤
+│    Preview (TOP)       │  <- Rendered markdown
+├────────────────────────┤
+│   Resize Handle        │  <- Drag to adjust
+├────────────────────────┤
+│   Editor (BOTTOM)      │  <- Type markdown here
+├────────────────────────┤
+│     Status Bar         │
+└────────────────────────┘
+```
+
+---
+
+## Desktop Development
 
 ---
 

@@ -12,6 +12,92 @@ on:
         default: '0.1.0'
 
 jobs:
+  # Build PWA and deploy to GitHub Pages
+  build-pwa:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: pwa/package-lock.json
+
+      - name: Install PWA dependencies
+        working-directory: pwa
+        run: npm ci || npm install
+
+      - name: Generate PWA icons
+        working-directory: pwa
+        run: |
+          # Install sharp for image processing
+          npm install sharp --save-dev
+
+          # Generate PNG icons from SVG
+          node -e "
+          const sharp = require('sharp');
+          const sizes = [16, 32, 72, 96, 120, 128, 144, 152, 180, 192, 384, 512];
+          const inputSvg = 'public/icons/icon.svg';
+
+          async function generateIcons() {
+            for (const size of sizes) {
+              await sharp(inputSvg)
+                .resize(size, size)
+                .png()
+                .toFile('public/icons/icon-' + size + '.png');
+              console.log('Generated icon-' + size + '.png');
+            }
+          }
+
+          generateIcons().catch(console.error);
+          "
+
+      - name: Build PWA
+        working-directory: pwa
+        run: npm run build
+
+      - name: Copy landing page to dist
+        run: |
+          # Copy existing docs (landing page) to the PWA dist folder
+          cp -r docs/* pwa/dist/ 2>/dev/null || true
+          # Move PWA files to /pwa subdirectory
+          mkdir -p pwa/dist/pwa
+          mv pwa/dist/assets pwa/dist/pwa/ 2>/dev/null || true
+          mv pwa/dist/index.html pwa/dist/pwa/ 2>/dev/null || true
+          mv pwa/dist/manifest.json pwa/dist/pwa/ 2>/dev/null || true
+          mv pwa/dist/sw.js pwa/dist/pwa/ 2>/dev/null || true
+          mv pwa/dist/icons pwa/dist/pwa/ 2>/dev/null || true
+          mv pwa/dist/src pwa/dist/pwa/ 2>/dev/null || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pwa/dist
+
+  deploy-pwa:
+    needs: build-pwa
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Build desktop apps
   build:
     strategy:
       fail-fast: false
@@ -130,7 +216,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    needs: build
+    needs: [build, build-pwa]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -172,21 +258,30 @@ jobs:
           files: release/*
           body: |
             ## down.edit v${{ steps.version.outputs.version }}
-            
+
             A beautiful Markdown editor with live preview.
-            
+
             ### Downloads
-            
+
             | Platform | Download |
             |----------|----------|
             | Windows | `down.edit-${{ steps.version.outputs.version }}-windows.exe` |
             | macOS | `down.edit-${{ steps.version.outputs.version }}-macos.dmg` |
             | Linux | `down.edit-${{ steps.version.outputs.version }}-linux.AppImage` |
-            
+            | Web/iOS/Android | [Use the PWA](https://vectorforgeai.github.io/downedit/pwa/) |
+
             ### Installation
-            
+
             - **Windows**: Download and run the `.exe` file directly
             - **macOS**: Download the `.dmg`, open it, and drag to Applications
             - **Linux**: Download the `.AppImage`, make it executable (`chmod +x`), and run
+            - **iPhone/Android/Web**: Visit the [PWA](https://vectorforgeai.github.io/downedit/pwa/) and "Add to Home Screen"
+
+            ### What's New
+
+            - Progressive Web App (PWA) for iOS, Android, and any browser
+            - Mobile-optimized interface with vertical split view
+            - Works completely offline
+            - All documents stored locally on your device
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

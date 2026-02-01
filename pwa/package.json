@@ -1,0 +1,31 @@
+{
+  "name": "downedit-pwa",
+  "version": "1.0.0",
+  "description": "down.edit Progressive Web App - A privacy-first Markdown editor",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "npx serve dist"
+  },
+  "dependencies": {
+    "docx": "^9.5.1",
+    "highlight.js": "^11.11.1",
+    "jspdf": "^4.0.0",
+    "marked": "^17.0.1"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "keywords": [
+    "markdown",
+    "editor",
+    "pwa",
+    "offline",
+    "privacy"
+  ],
+  "author": "VectorForge",
+  "license": "MIT"
+}
