@@ -127,6 +127,31 @@ async fn open_image_dialog(app: tauri::AppHandle) -> Result<Option<String>, Stri
         .map_err(|e| format!("Failed to receive dialog result: {}", e))
 }
 
+// Open Word file dialog and return selected path
+#[tauri::command]
+async fn open_word_file_dialog(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let (tx, rx) = mpsc::channel();
+
+    app.dialog()
+        .file()
+        .add_filter("Word Documents", &["docx", "doc"])
+        .add_filter("Word Document", &["docx"])
+        .pick_file(move |file_path| {
+            let path = file_path.map(|p| p.to_string());
+            let _ = tx.send(path);
+        });
+
+    rx.recv()
+        .map_err(|e| format!("Failed to receive dialog result: {}", e))
+}
+
+// Read file as binary and return as base64
+#[tauri::command]
+fn read_file_as_base64(path: &str) -> Result<String, String> {
+    let data = fs::read(path).map_err(|e| e.to_string())?;
+    Ok(general_purpose::STANDARD.encode(&data))
+}
+
 // Read image file and return as base64 data URI
 #[tauri::command]
 fn read_image_as_base64(path: &str) -> Result<String, String> {
@@ -168,7 +193,9 @@ pub fn run() {
             save_file_dialog,
             confirm_dialog,
             open_image_dialog,
-            read_image_as_base64
+            read_image_as_base64,
+            open_word_file_dialog,
+            read_file_as_base64
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -6,6 +6,8 @@ import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
+import mammoth from 'mammoth';
+import TurndownService from 'turndown';
 
 // Import common languages for syntax highlighting
 import javascript from 'highlight.js/lib/languages/javascript';
@@ -475,6 +477,240 @@ function beautifyMarkdown() {
   }
 
   closeDialog('beautify-dialog');
+}
+
+// ==========================================
+// Word to Markdown Import
+// ==========================================
+
+// Initialize Turndown service with custom rules
+function createTurndownService() {
+  const turndownService = new TurndownService({
+    headingStyle: 'atx',
+    bulletListMarker: '-',
+    codeBlockStyle: 'fenced',
+    emDelimiter: '*',
+    strongDelimiter: '**',
+    linkStyle: 'inlined'
+  });
+
+  // Add custom rule for tables (turndown doesn't handle tables by default)
+  turndownService.addRule('table', {
+    filter: 'table',
+    replacement: function(content, node) {
+      const rows = node.querySelectorAll('tr');
+      if (rows.length === 0) return '';
+
+      let markdown = '\n';
+      let headerProcessed = false;
+
+      rows.forEach((row, rowIndex) => {
+        const cells = row.querySelectorAll('th, td');
+        const cellContents = Array.from(cells).map(cell =>
+          cell.textContent.trim().replace(/\|/g, '\\|').replace(/\n/g, ' ')
+        );
+
+        markdown += '| ' + cellContents.join(' | ') + ' |\n';
+
+        // Add header separator after first row
+        if (rowIndex === 0 && !headerProcessed) {
+          markdown += '| ' + cellContents.map(() => '---').join(' | ') + ' |\n';
+          headerProcessed = true;
+        }
+      });
+
+      return markdown + '\n';
+    }
+  });
+
+  // Handle strikethrough
+  turndownService.addRule('strikethrough', {
+    filter: ['del', 's', 'strike'],
+    replacement: function(content) {
+      return '~~' + content + '~~';
+    }
+  });
+
+  // Handle task lists
+  turndownService.addRule('taskListItem', {
+    filter: function(node) {
+      return node.nodeName === 'LI' && node.querySelector('input[type="checkbox"]');
+    },
+    replacement: function(content, node) {
+      const checkbox = node.querySelector('input[type="checkbox"]');
+      const checked = checkbox && checkbox.checked ? '[x]' : '[ ]';
+      const text = content.replace(/^\s*\[[ x]\]\s*/i, '').trim();
+      return '- ' + checked + ' ' + text + '\n';
+    }
+  });
+
+  return turndownService;
+}
+
+// Convert Word document to Markdown
+async function convertWordToMarkdown(arrayBuffer, options = {}) {
+  const {
+    preserveImages = true,
+    styleMap = []
+  } = options;
+
+  // Default style mappings for better conversion
+  const defaultStyleMap = [
+    "p[style-name='Title'] => h1",
+    "p[style-name='Heading 1'] => h1",
+    "p[style-name='Heading 2'] => h2",
+    "p[style-name='Heading 3'] => h3",
+    "p[style-name='Heading 4'] => h4",
+    "p[style-name='Heading 5'] => h5",
+    "p[style-name='Heading 6'] => h6",
+    ...styleMap
+  ];
+
+  // Mammoth options
+  const mammothOptions = {
+    styleMap: defaultStyleMap
+  };
+
+  // If preserving images, include image conversion
+  if (preserveImages) {
+    mammothOptions.convertImage = mammoth.images.imgElement(function(image) {
+      return image.read('base64').then(function(imageBuffer) {
+        const mimeType = image.contentType || 'image/png';
+        return {
+          src: `data:${mimeType};base64,${imageBuffer}`
+        };
+      });
+    });
+  }
+
+  // Convert DOCX to HTML using Mammoth
+  const result = await mammoth.convertToHtml({ arrayBuffer }, mammothOptions);
+  const html = result.value;
+  const messages = result.messages;
+
+  // Log any warnings from mammoth
+  if (messages.length > 0) {
+    console.log('Word conversion messages:', messages);
+  }
+
+  // Convert HTML to Markdown using Turndown
+  const turndownService = createTurndownService();
+  let markdown = turndownService.turndown(html);
+
+  // Post-process markdown to clean up common issues
+  markdown = postProcessMarkdown(markdown);
+
+  return {
+    markdown,
+    warnings: messages.map(m => m.message)
+  };
+}
+
+// Post-process markdown to clean up formatting
+function postProcessMarkdown(markdown) {
+  let result = markdown;
+
+  // Remove excessive blank lines (more than 2 consecutive)
+  result = result.replace(/\n{4,}/g, '\n\n\n');
+
+  // Ensure headings have blank lines before and after
+  result = result.replace(/([^\n])\n(#{1,6} )/g, '$1\n\n$2');
+  result = result.replace(/(#{1,6} [^\n]+)\n([^\n#])/g, '$1\n\n$2');
+
+  // Clean up list formatting
+  result = result.replace(/\n{3,}(-|\*|\d+\.)/g, '\n\n$1');
+
+  // Remove trailing whitespace from lines
+  result = result.split('\n').map(line => line.trimEnd()).join('\n');
+
+  // Ensure file ends with single newline
+  result = result.trimEnd() + '\n';
+
+  return result;
+}
+
+// Open Word file and convert to Markdown
+async function importFromWord() {
+  try {
+    // Show file dialog for Word documents
+    const filePath = await invoke('open_word_file_dialog');
+
+    if (!filePath) {
+      return; // User cancelled
+    }
+
+    // Show loading state
+    showImportProgress('Reading Word document...');
+
+    // Read the file as base64
+    const base64Data = await invoke('read_file_as_base64', { path: filePath });
+
+    // Convert base64 to ArrayBuffer
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const arrayBuffer = bytes.buffer;
+
+    // Update progress
+    showImportProgress('Converting to Markdown...');
+
+    // Get conversion options from dialog (if shown) or use defaults
+    const options = {
+      preserveImages: document.getElementById('import-preserve-images')?.checked ?? true
+    };
+
+    // Convert to Markdown
+    const result = await convertWordToMarkdown(arrayBuffer, options);
+
+    // Get filename for the new tab
+    const originalFileName = await invoke('get_file_name', { path: filePath });
+    const newFileName = originalFileName.replace(/\.(docx?|doc)$/i, '.md');
+
+    // Create a new tab with the converted content
+    createTab(null, newFileName, result.markdown, true);
+
+    // Hide progress
+    hideImportProgress();
+
+    // Show warnings if any
+    if (result.warnings.length > 0) {
+      console.log('Import warnings:', result.warnings);
+    }
+
+  } catch (err) {
+    hideImportProgress();
+    console.error('Error importing Word document:', err);
+    alert(`Failed to import Word document: ${err}`);
+  }
+}
+
+// Show import progress indicator
+function showImportProgress(message) {
+  let progressEl = document.getElementById('import-progress');
+  if (!progressEl) {
+    progressEl = document.createElement('div');
+    progressEl.id = 'import-progress';
+    progressEl.className = 'import-progress';
+    progressEl.innerHTML = `
+      <div class="import-progress-content">
+        <div class="import-spinner"></div>
+        <span class="import-message"></span>
+      </div>
+    `;
+    document.body.appendChild(progressEl);
+  }
+  progressEl.querySelector('.import-message').textContent = message;
+  progressEl.classList.remove('hidden');
+}
+
+// Hide import progress indicator
+function hideImportProgress() {
+  const progressEl = document.getElementById('import-progress');
+  if (progressEl) {
+    progressEl.classList.add('hidden');
+  }
 }
 
 // Hints Panel Management
@@ -2711,6 +2947,41 @@ function initExportListeners() {
   document.getElementById('html-export-btn').addEventListener('click', exportToHtml);
 }
 
+function initImportListeners() {
+  // Import dropdown toggle
+  const importBtn = document.getElementById('btn-import');
+  const importMenu = document.getElementById('import-menu');
+
+  if (!importBtn || !importMenu) return;
+
+  importBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleImportMenu();
+  });
+
+  // Close import menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!importBtn.contains(e.target) && !importMenu.contains(e.target)) {
+      closeImportMenu();
+    }
+  });
+
+  // Import from Word option
+  document.getElementById('import-word').addEventListener('click', () => {
+    closeImportMenu();
+    importFromWord();
+  });
+}
+
+function toggleImportMenu() {
+  const menu = document.getElementById('import-menu');
+  menu.classList.toggle('hidden');
+}
+
+function closeImportMenu() {
+  document.getElementById('import-menu').classList.add('hidden');
+}
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing app...');
@@ -2719,6 +2990,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDragDrop();
   initKeyboardShortcuts();
   initResizeHandle();
+  initImportListeners();
   setViewMode('split');
 
   // Try to restore auto-saved content

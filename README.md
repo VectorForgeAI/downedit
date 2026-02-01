@@ -53,6 +53,14 @@ Whether you're writing documentation, taking notes, or creating content, down.ed
 | **Markdown Beautifier** | Clean up and normalize Markdown formatting |
 | **Markdown Hints** | Built-in syntax reference panel |
 
+### Import & Conversion
+
+| Feature | Description |
+|---------|-------------|
+| **Import from Word** | Convert .docx files to Markdown with preserved formatting |
+| **Smart Conversion** | Headings, lists, tables, links, and images are converted accurately |
+| **Embedded Images** | Images from Word documents are embedded as base64 in Markdown |
+
 ### Export & Conversion
 
 | Feature | Description |
@@ -258,6 +266,8 @@ Build outputs vary by platform:
 | **Syntax Highlighting** | [highlight.js](https://highlightjs.org/) |
 | **PDF Export** | [jsPDF](https://github.com/parallax/jsPDF) |
 | **Word Export** | [docx](https://github.com/dolanmiu/docx) |
+| **Word Import** | [mammoth](https://github.com/mwilliamson/mammoth.js) |
+| **HTML to Markdown** | [turndown](https://github.com/mixmark-io/turndown) |
 
 ---
 
@@ -329,6 +339,11 @@ Contributions are welcome! Please follow these steps:
 
 ## Roadmap
 
+### Completed Features
+
+- [x] Word to Markdown import (.docx)
+- [x] HTML to Markdown conversion (via Word import)
+
 ### Planned Features
 
 - [ ] Find & Replace
@@ -339,7 +354,7 @@ Contributions are welcome! Please follow these steps:
 - [ ] Print support
 - [ ] Table of Contents generator
 - [ ] CSV to Table conversion
-- [ ] HTML to Markdown conversion
+- [ ] PDF to Markdown import
 
 ---
 
@@ -355,6 +370,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [marked](https://marked.js.org/) - For reliable Markdown parsing
 - [highlight.js](https://highlightjs.org/) - For beautiful syntax highlighting
 - [jsPDF](https://github.com/parallax/jsPDF) & [docx](https://github.com/dolanmiu/docx) - For export capabilities
+- [mammoth](https://github.com/mwilliamson/mammoth.js) & [turndown](https://github.com/mixmark-io/turndown) - For Word import capabilities
 
 ---
 

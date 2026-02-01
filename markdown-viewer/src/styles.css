@@ -313,6 +313,74 @@ body {
   display: none;
 }
 
+/* Import Dropdown */
+.import-dropdown {
+  position: relative;
+}
+
+.import-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-md);
+  min-width: 200px;
+  z-index: 100;
+  padding: 4px;
+}
+
+.import-dropdown-menu.hidden {
+  display: none;
+}
+
+/* Import Progress Indicator */
+.import-progress {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.import-progress.hidden {
+  display: none;
+}
+
+.import-progress-content {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+.import-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.import-message {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
 /* Modal Dialogs */
 .modal-overlay {
   position: fixed;

@@ -18,6 +18,7 @@ Welcome to **down.edit**, a modern Markdown editor for Windows, macOS, and Linux
 3. [Working with Files](#working-with-files)
    - [Creating New Files](#creating-new-files)
    - [Opening Files](#opening-files)
+   - [Importing from Word](#importing-from-word)
    - [Saving Files](#saving-files)
    - [Closing Files](#closing-files)
 4. [Editing Markdown](#editing-markdown)
@@ -96,7 +97,8 @@ The main toolbar contains essential controls:
 
 | Button | Description |
 |--------|-------------|
-| **Open** | Open an existing file |
+| **Open** | Open an existing Markdown file |
+| **Import** | Import and convert Word documents to Markdown |
 | **Outline** | Toggle the document outline panel |
 | **History** | Toggle the document history panel |
 | **Beautify** | Clean up Markdown formatting |
@@ -168,6 +170,46 @@ There are several ways to open files:
 - `.md` - Markdown files
 - `.markdown` - Markdown files (alternate extension)
 - `.txt` - Plain text files
+
+### Importing from Word
+
+down.edit can import Microsoft Word documents (.docx) and automatically convert them to Markdown format.
+
+#### How to Import
+
+1. Click the **Import** dropdown button in the toolbar
+2. Select **Import from Word (.docx)**
+3. Navigate to your Word document in the file dialog
+4. Click **Open**
+5. The document is converted and opens in a new tab
+
+#### What Gets Converted
+
+| Word Element | Markdown Result |
+|--------------|-----------------|
+| Headings (Heading 1-6) | `# Heading` through `###### Heading` |
+| Bold text | `**bold**` |
+| Italic text | `*italic*` |
+| Strikethrough | `~~strikethrough~~` |
+| Bulleted lists | `- item` |
+| Numbered lists | `1. item` |
+| Tables | Markdown tables with proper alignment |
+| Links | `[text](url)` |
+| Images | Embedded as base64 data URIs |
+
+#### Tips for Best Results
+
+- **Use Word's built-in styles**: Documents that use Heading 1, Heading 2, etc. convert more accurately
+- **Simple formatting works best**: Complex layouts may need manual cleanup
+- **Images are embedded**: Large images increase file size; consider replacing with external links
+- **Tables are preserved**: Column alignment is converted to Markdown table syntax
+
+#### Limitations
+
+- `.doc` files (older Word format) are not supported; save as `.docx` first
+- Complex formatting (text boxes, SmartArt, shapes) may not convert
+- Headers, footers, and page numbers are not included
+- Track changes and comments are ignored
 
 ### Saving Files
 
@@ -598,6 +640,24 @@ In Split mode, adjust the editor and preview sizes:
 - Ensure WebView2 runtime is installed (download from Microsoft)
 - Try running as administrator
 - Reinstall the application
+
+### Word Import Issues
+
+**Problem:** Word document fails to import or converts incorrectly.
+
+**Solutions:**
+- Ensure the file is `.docx` format (not the older `.doc` format)
+- Try opening the file in Microsoft Word and re-saving it
+- Check if the document uses custom styles; built-in styles convert better
+- Large documents with many images may take longer to process
+- Complex layouts (multi-column, text boxes) may not convert properly
+
+**Problem:** Images are missing after import.
+
+**Solutions:**
+- Images are embedded as base64 data; very large images may fail
+- Check if the original images are linked (external) vs embedded in Word
+- Try re-inserting images in Word as embedded rather than linked
 
 ---
 

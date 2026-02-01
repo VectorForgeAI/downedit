@@ -203,8 +203,9 @@ markdown-viewer/
 | F4.3 | Export to HTML | Export as standalone HTML file | ✅ Complete |
 | F4.4 | PDF Themes | Professional, Academic, Minimal, Custom | ✅ Complete |
 | F4.5 | PDF Options | Page size, margins, font size, line height | ✅ Complete |
-| F4.6 | HTML to Markdown | Convert HTML content to markdown | ⬜ Deferred |
+| F4.6 | HTML to Markdown | Convert HTML content to markdown | ✅ Complete (via Word import) |
 | F4.7 | CSV to Table | Convert CSV data to markdown table | ⬜ Deferred |
+| F4.8 | Word to Markdown | Import .docx files and convert to markdown | ✅ Complete |
 
 ### Tasks
 
@@ -216,12 +217,66 @@ markdown-viewer/
 | T4.4 | DOCX Generator | Implement docx.js integration | ✅ Complete |
 | T4.5 | DOCX Style Mapping | Map markdown to Word styles | ✅ Complete |
 | T4.6 | HTML Export | Generate standalone HTML with styles | ✅ Complete |
-| T4.7 | HTML to MD Converter | turndown.js integration | ⬜ Deferred |
+| T4.7 | HTML to MD Converter | turndown.js integration | ✅ Complete |
 | T4.8 | CSV Parser | Parse CSV and generate table markdown | ⬜ Deferred |
+| T4.11 | Word Import Dialog | File dialog for .docx selection | ✅ Complete |
+| T4.12 | DOCX Parser | mammoth.js integration for DOCX to HTML | ✅ Complete |
+| T4.13 | Word Import UI | Import button and dropdown menu | ✅ Complete |
 | T4.9 | Export Dialog UI | Unified export dialog with options | ✅ Complete |
 | T4.10 | Image Embedding | Embed images in PDF/DOCX exports | ⬜ Deferred |
 
 ### Technical Specifications
+
+#### Word Import Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Word Import Flow                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   1. User clicks Import → Import from Word                   │
+│                    ↓                                         │
+│   2. Rust backend: open_word_file_dialog()                  │
+│      - Shows native file picker (.docx filter)              │
+│                    ↓                                         │
+│   3. Rust backend: read_file_as_base64()                    │
+│      - Reads binary file, returns base64 string             │
+│                    ↓                                         │
+│   4. JavaScript: Convert base64 to ArrayBuffer              │
+│                    ↓                                         │
+│   5. mammoth.js: convertToHtml()                            │
+│      - Parses DOCX XML structure                            │
+│      - Maps Word styles to HTML elements                    │
+│      - Extracts and embeds images as base64                 │
+│                    ↓                                         │
+│   6. turndown.js: turndown()                                │
+│      - Converts HTML to Markdown                            │
+│      - Custom rules for tables, strikethrough, tasks        │
+│                    ↓                                         │
+│   7. Post-processing: postProcessMarkdown()                 │
+│      - Normalizes spacing and blank lines                   │
+│      - Cleans up list formatting                            │
+│                    ↓                                         │
+│   8. Create new tab with converted content                  │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Word Style Mappings
+
+| Word Style | HTML Element | Markdown |
+|------------|--------------|----------|
+| Title | h1 | # |
+| Heading 1 | h1 | # |
+| Heading 2 | h2 | ## |
+| Heading 3 | h3 | ### |
+| Heading 4 | h4 | #### |
+| Heading 5 | h5 | ##### |
+| Heading 6 | h6 | ###### |
+| Normal | p | (paragraph) |
+| Bold | strong | **text** |
+| Italic | em | *text* |
+| Hyperlink | a | [text](url) |
 
 #### PDF Export Options
 ```
@@ -289,13 +344,19 @@ markdown-viewer/
 }
 ```
 
-### Future Dependencies (Phase III-IV)
+### Current Dependencies (Complete)
 ```json
 {
   "dependencies": {
-    "docx": "^8.x",
-    "jspdf": "^2.x",
-    "turndown": "^7.x"
+    "@tauri-apps/api": "^2.9.1",
+    "@tauri-apps/plugin-dialog": "^2.6.0",
+    "@tauri-apps/plugin-fs": "^2.4.5",
+    "docx": "^9.5.1",
+    "highlight.js": "^11.11.1",
+    "jspdf": "^4.0.0",
+    "mammoth": "^1.8.0",
+    "marked": "^17.0.1",
+    "turndown": "^7.2.0"
   }
 }
 ```
@@ -337,6 +398,31 @@ npm run tauri build
 ---
 
 ## Progress Log
+
+### 2026-02-01 - Word Import Feature Complete
+
+**Implementation:**
+- Added mammoth.js and turndown.js dependencies for DOCX conversion
+- Created Rust backend commands for Word file dialog and binary file reading
+- Implemented Word to Markdown conversion pipeline:
+  - DOCX → HTML via mammoth.js with style mappings
+  - HTML → Markdown via turndown.js with custom rules
+  - Post-processing for clean Markdown output
+- Added Import dropdown button in toolbar
+- Created import progress indicator with spinner
+- Custom Turndown rules for tables, strikethrough, and task lists
+- Updated all documentation (README, USER_GUIDE, DEVELOPMENT)
+
+**Files Modified:**
+- `package.json` - Added mammoth and turndown dependencies
+- `src-tauri/src/lib.rs` - Added open_word_file_dialog and read_file_as_base64 commands
+- `src/main.js` - Added Word import functionality (~230 lines)
+- `src/styles.css` - Added import dropdown and progress indicator styles
+- `index.html` - Added Import dropdown UI
+
+**Status:** Word to Markdown import feature complete
+
+---
 
 ### 2026-01-31 - Phase I Complete
 
@@ -395,15 +481,28 @@ npm run tauri build
 - [ ] Beautifier cleans up markdown
 
 ### Phase IV
-- [ ] PDF export with themes
-- [ ] DOCX export works
-- [ ] HTML export works
-- [ ] Export options save correctly
+- [x] PDF export with themes
+- [x] DOCX export works
+- [x] HTML export works
+- [x] Export options save correctly
 - [ ] Images embedded in exports
-- [ ] Tables render in exports
-- [ ] HTML to MD conversion works
+- [x] Tables render in exports
+- [x] HTML to MD conversion works
 - [ ] CSV to table conversion works
+
+### Word Import
+- [ ] Import button displays in toolbar
+- [ ] Import dropdown shows "Import from Word" option
+- [ ] File dialog opens for .docx files
+- [ ] Progress indicator shows during conversion
+- [ ] Headings convert correctly (H1-H6)
+- [ ] Bold and italic text converts
+- [ ] Lists (bullet and numbered) convert
+- [ ] Tables convert to Markdown tables
+- [ ] Links preserve URL and text
+- [ ] Images embed as base64
+- [ ] New tab opens with converted content
 
 ---
 
-*Last Updated: 2026-01-31 - Phase II-IV planning complete*
+*Last Updated: 2026-02-01 - Word Import feature complete*
