@@ -72,8 +72,12 @@ hljs.registerLanguage('dockerfile', dockerfile);
 const state = {
   tabs: [],
   activeTabId: null,
-  theme: 'system', // 'system', 'light', 'dark'
+  theme: 'system',
   outlineVisible: false,
+  viewMode: 'split', // 'edit', 'split', 'preview'
+  isFullscreen: false,
+  autoSaveTimer: null,
+  newFileCounter: 1,
 };
 
 // Configure marked with GFM
@@ -84,7 +88,6 @@ const marked = new Marked({
 });
 
 // Custom renderer for code blocks with copy button
-// Note: marked v17+ passes token objects to renderer functions
 const renderer = {
   code(token) {
     const code = token.text || '';
@@ -109,7 +112,6 @@ const renderer = {
     </div>`;
   },
 
-  // Add IDs to headings for outline navigation
   heading(token) {
     const text = token.text || '';
     const level = token.depth || 1;
@@ -117,7 +119,6 @@ const renderer = {
     return `<h${level} id="${id}">${text}</h${level}>`;
   },
 
-  // Task list items
   listitem(token) {
     const text = token.text || '';
     const task = token.task;
@@ -152,6 +153,17 @@ function generateId() {
   return Math.random().toString(36).substr(2, 9);
 }
 
+// Word and character count
+function countWords(text) {
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).length;
+}
+
+function countChars(text) {
+  return text.length;
+}
+
 // Theme Management
 function initTheme() {
   const saved = localStorage.getItem('mdviewer-theme');
@@ -164,7 +176,6 @@ function initTheme() {
 
 function applyTheme() {
   const html = document.documentElement;
-
   if (state.theme === 'system') {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
@@ -188,22 +199,44 @@ function updateThemeLabel() {
   label.textContent = labels[state.theme];
 }
 
-// Listen for system theme changes
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   if (state.theme === 'system') {
     applyTheme();
   }
 });
 
+// View Mode Management
+function setViewMode(mode) {
+  state.viewMode = mode;
+  const container = document.getElementById('editor-container');
+  container.setAttribute('data-mode', mode);
+
+  // Update mode buttons
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.getElementById(`btn-mode-${mode}`).classList.add('active');
+}
+
+// Fullscreen Management
+function toggleFullscreen() {
+  state.isFullscreen = !state.isFullscreen;
+  document.body.classList.toggle('fullscreen', state.isFullscreen);
+}
+
 // Tab Management
-function createTab(filePath, fileName, content) {
+function createTab(filePath, fileName, content, isNew = false) {
   const id = generateId();
   const tab = {
     id,
     filePath,
     fileName,
     content,
+    originalContent: content,
     scrollPosition: 0,
+    editorScrollPosition: 0,
+    isDirty: isNew,
+    isNew,
   };
 
   state.tabs.push(tab);
@@ -214,35 +247,60 @@ function createTab(filePath, fileName, content) {
 }
 
 function activateTab(id) {
+  // Save current tab state
+  if (state.activeTabId) {
+    const currentTab = state.tabs.find(t => t.id === state.activeTabId);
+    if (currentTab) {
+      const editor = document.getElementById('editor');
+      const viewer = document.getElementById('viewer');
+      if (editor) currentTab.editorScrollPosition = editor.scrollTop;
+      if (viewer) currentTab.scrollPosition = viewer.scrollTop;
+      currentTab.content = editor.value;
+    }
+  }
+
   state.activeTabId = id;
   renderTabs();
   renderContent();
   updateOutline();
+  updateStatusBar();
+  showEditorView();
 }
 
-function closeTab(id) {
-  const index = state.tabs.findIndex(t => t.id === id);
-  if (index === -1) return;
+function closeTab(id, force = false) {
+  const tab = state.tabs.find(t => t.id === id);
+  if (!tab) return;
 
-  // Save scroll position before closing
-  const viewer = document.getElementById('viewer');
-  const currentTab = state.tabs.find(t => t.id === state.activeTabId);
-  if (currentTab && viewer) {
-    currentTab.scrollPosition = viewer.scrollTop;
+  // Check for unsaved changes
+  if (tab.isDirty && !force) {
+    handleUnsavedChanges(tab, () => closeTab(id, true));
+    return;
   }
 
+  const index = state.tabs.findIndex(t => t.id === id);
   state.tabs.splice(index, 1);
 
   if (state.tabs.length === 0) {
     state.activeTabId = null;
     showWelcome();
   } else if (id === state.activeTabId) {
-    // Activate adjacent tab
     const newIndex = Math.min(index, state.tabs.length - 1);
     activateTab(state.tabs[newIndex].id);
   }
 
   renderTabs();
+}
+
+async function handleUnsavedChanges(tab, callback) {
+  const shouldSave = await invoke('confirm_dialog', {
+    title: 'Unsaved Changes',
+    message: `Do you want to save changes to "${tab.fileName}"?`
+  });
+
+  if (shouldSave) {
+    await saveFile();
+  }
+  callback();
 }
 
 function renderTabs() {
@@ -254,22 +312,15 @@ function renderTabs() {
   }
 
   tabsContainer.innerHTML = state.tabs.map(tab => `
-    <div class="tab ${tab.id === state.activeTabId ? 'active' : ''}" data-id="${tab.id}">
+    <div class="tab ${tab.id === state.activeTabId ? 'active' : ''} ${tab.isDirty ? 'dirty' : ''}" data-id="${tab.id}">
       <span class="tab-title" title="${tab.filePath || tab.fileName}">${tab.fileName}</span>
       <button class="tab-close" data-id="${tab.id}" title="Close">×</button>
     </div>
   `).join('');
 
-  // Add event listeners
   tabsContainer.querySelectorAll('.tab').forEach(tabEl => {
     tabEl.addEventListener('click', (e) => {
       if (!e.target.classList.contains('tab-close')) {
-        // Save current scroll position
-        const viewer = document.getElementById('viewer');
-        const currentTab = state.tabs.find(t => t.id === state.activeTabId);
-        if (currentTab && viewer) {
-          currentTab.scrollPosition = viewer.scrollTop;
-        }
         activateTab(tabEl.dataset.id);
       }
     });
@@ -284,10 +335,20 @@ function renderTabs() {
 }
 
 // Content Rendering
-function renderContent() {
-  const welcome = document.getElementById('welcome');
-  const viewer = document.getElementById('viewer');
+function showWelcome() {
+  document.getElementById('welcome').classList.remove('hidden');
+  document.getElementById('editor-container').classList.add('hidden');
+  document.getElementById('status-bar').classList.add('hidden');
+  document.getElementById('outline-content').innerHTML = '';
+}
 
+function showEditorView() {
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('editor-container').classList.remove('hidden');
+  document.getElementById('status-bar').classList.remove('hidden');
+}
+
+function renderContent() {
   if (!state.activeTabId) {
     showWelcome();
     return;
@@ -296,13 +357,17 @@ function renderContent() {
   const tab = state.tabs.find(t => t.id === state.activeTabId);
   if (!tab) return;
 
-  welcome.classList.add('hidden');
-  viewer.classList.remove('hidden');
+  const editor = document.getElementById('editor');
+  const viewer = document.getElementById('viewer');
 
-  // Render markdown
-  viewer.innerHTML = marked.parse(tab.content);
+  // Set editor content
+  editor.value = tab.content;
+  editor.scrollTop = tab.editorScrollPosition || 0;
 
-  // Restore scroll position
+  // Render preview
+  renderPreview();
+
+  // Restore viewer scroll position
   viewer.scrollTop = tab.scrollPosition || 0;
 
   // Add copy button functionality
@@ -311,10 +376,17 @@ function renderContent() {
   });
 }
 
-function showWelcome() {
-  document.getElementById('welcome').classList.remove('hidden');
-  document.getElementById('viewer').classList.add('hidden');
-  document.getElementById('outline-content').innerHTML = '';
+function renderPreview() {
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab) return;
+
+  const viewer = document.getElementById('viewer');
+  viewer.innerHTML = marked.parse(tab.content);
+
+  // Re-add copy button functionality
+  viewer.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => copyCode(btn));
+  });
 }
 
 async function copyCode(btn) {
@@ -334,6 +406,82 @@ async function copyCode(btn) {
     }, 2000);
   } catch (err) {
     console.error('Failed to copy:', err);
+  }
+}
+
+// Status Bar
+function updateStatusBar() {
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab) return;
+
+  const wordCount = countWords(tab.content);
+  const charCount = countChars(tab.content);
+
+  document.getElementById('status-wordcount').textContent = `${wordCount} word${wordCount !== 1 ? 's' : ''}`;
+  document.getElementById('status-charcount').textContent = `${charCount} character${charCount !== 1 ? 's' : ''}`;
+}
+
+function showAutoSaveStatus(saving = false) {
+  const indicator = document.querySelector('.autosave-indicator');
+  const text = document.getElementById('autosave-text');
+
+  if (saving) {
+    indicator.classList.add('saving');
+    text.textContent = 'Saving...';
+  } else {
+    indicator.classList.remove('saving');
+    text.textContent = 'Auto-saved';
+  }
+}
+
+// Auto-save to localStorage
+function autoSave() {
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab) return;
+
+  showAutoSaveStatus(true);
+
+  // Save to localStorage
+  const autoSaveData = {
+    tabs: state.tabs.map(t => ({
+      id: t.id,
+      fileName: t.fileName,
+      content: t.content,
+      filePath: t.filePath,
+      isNew: t.isNew,
+    })),
+    activeTabId: state.activeTabId,
+    timestamp: Date.now(),
+  };
+
+  localStorage.setItem('mdviewer-autosave', JSON.stringify(autoSaveData));
+
+  setTimeout(() => showAutoSaveStatus(false), 500);
+}
+
+function loadAutoSave() {
+  const saved = localStorage.getItem('mdviewer-autosave');
+  if (!saved) return false;
+
+  try {
+    const data = JSON.parse(saved);
+    // Only restore if less than 24 hours old
+    if (Date.now() - data.timestamp > 24 * 60 * 60 * 1000) {
+      localStorage.removeItem('mdviewer-autosave');
+      return false;
+    }
+
+    data.tabs.forEach(t => {
+      createTab(t.filePath, t.fileName, t.content, t.isNew);
+    });
+
+    if (data.activeTabId && state.tabs.find(t => t.id === data.activeTabId)) {
+      activateTab(data.activeTabId);
+    }
+
+    return state.tabs.length > 0;
+  } catch {
+    return false;
   }
 }
 
@@ -361,7 +509,6 @@ function updateOutline() {
     return `<button class="outline-item" data-level="${level}" data-id="${id}">${text}</button>`;
   }).join('');
 
-  // Add click handlers
   outlineContent.querySelectorAll('.outline-item').forEach(item => {
     item.addEventListener('click', () => {
       const heading = document.getElementById(item.dataset.id);
@@ -378,14 +525,15 @@ function toggleOutline() {
   panel.classList.toggle('hidden', !state.outlineVisible);
 }
 
-// File Operations - Use Rust command for file dialog
-async function openFile() {
-  console.log('openFile called');
-  try {
-    // Call Rust command to open file dialog
-    const selected = await invoke('open_file_dialog');
-    console.log('Dialog returned:', selected);
+// File Operations
+function newFile() {
+  const fileName = `Untitled-${state.newFileCounter++}.md`;
+  createTab(null, fileName, '', true);
+}
 
+async function openFile() {
+  try {
+    const selected = await invoke('open_file_dialog');
     if (selected && selected.length > 0) {
       for (const filePath of selected) {
         await loadFile(filePath);
@@ -398,7 +546,6 @@ async function openFile() {
 }
 
 async function loadFile(filePath) {
-  console.log('loadFile called with:', filePath);
   // Check if file is already open
   const existingTab = state.tabs.find(t => t.filePath === filePath);
   if (existingTab) {
@@ -409,17 +556,116 @@ async function loadFile(filePath) {
   try {
     const content = await invoke('read_file', { path: filePath });
     const fileName = await invoke('get_file_name', { path: filePath });
-    console.log('File loaded:', fileName);
-    createTab(filePath, fileName, content);
+    createTab(filePath, fileName, content, false);
   } catch (err) {
     console.error('Error loading file:', err);
     alert(`Failed to open file: ${err}`);
   }
 }
 
-// Drag and Drop - Using Tauri event system
+async function saveFile() {
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab) return;
+
+  if (tab.isNew || !tab.filePath) {
+    await saveFileAs();
+    return;
+  }
+
+  try {
+    await invoke('write_file', { path: tab.filePath, content: tab.content });
+    tab.originalContent = tab.content;
+    tab.isDirty = false;
+    renderTabs();
+  } catch (err) {
+    console.error('Error saving file:', err);
+    alert(`Failed to save file: ${err}`);
+  }
+}
+
+async function saveFileAs() {
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab) return;
+
+  try {
+    const filePath = await invoke('save_file_dialog', { defaultName: tab.fileName });
+    if (filePath) {
+      await invoke('write_file', { path: filePath, content: tab.content });
+      tab.filePath = filePath;
+      tab.fileName = await invoke('get_file_name', { path: filePath });
+      tab.originalContent = tab.content;
+      tab.isDirty = false;
+      tab.isNew = false;
+      renderTabs();
+    }
+  } catch (err) {
+    console.error('Error saving file:', err);
+    alert(`Failed to save file: ${err}`);
+  }
+}
+
+// Editor Input Handler
+function handleEditorInput() {
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab) return;
+
+  const editor = document.getElementById('editor');
+  tab.content = editor.value;
+  tab.isDirty = tab.content !== tab.originalContent;
+
+  renderTabs();
+  renderPreview();
+  updateOutline();
+  updateStatusBar();
+
+  // Debounced auto-save
+  clearTimeout(state.autoSaveTimer);
+  state.autoSaveTimer = setTimeout(autoSave, 1000);
+}
+
+// Resize Handle
+function initResizeHandle() {
+  const handle = document.getElementById('resize-handle');
+  const editorPane = document.getElementById('editor-pane');
+  const container = document.getElementById('editor-container');
+
+  let isResizing = false;
+  let startX = 0;
+  let startWidth = 0;
+
+  handle.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    startX = e.clientX;
+    startWidth = editorPane.offsetWidth;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+
+    const containerWidth = container.offsetWidth;
+    const newWidth = startWidth + (e.clientX - startX);
+    const minWidth = 200;
+    const maxWidth = containerWidth - 204; // 200 min for preview + 4 for handle
+
+    editorPane.style.flex = 'none';
+    editorPane.style.width = `${Math.min(Math.max(newWidth, minWidth), maxWidth)}px`;
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isResizing) {
+      isResizing = false;
+      handle.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  });
+}
+
+// Drag and Drop
 async function initDragDrop() {
-  // Create overlay
   const overlay = document.createElement('div');
   overlay.className = 'drop-overlay';
   overlay.innerHTML = `
@@ -433,7 +679,6 @@ async function initDragDrop() {
   `;
   document.body.appendChild(overlay);
 
-  // Listen for Tauri drag-drop events
   try {
     await listen('tauri://drag-over', () => {
       overlay.classList.add('active');
@@ -445,7 +690,6 @@ async function initDragDrop() {
 
     await listen('tauri://drag-drop', async (event) => {
       overlay.classList.remove('active');
-      console.log('Drop event:', event);
       const paths = event.payload.paths || event.payload;
       if (Array.isArray(paths)) {
         for (const filePath of paths) {
@@ -455,8 +699,6 @@ async function initDragDrop() {
         }
       }
     });
-
-    console.log('Drag-drop listeners registered');
   } catch (err) {
     console.error('Error setting up drag-drop:', err);
   }
@@ -465,10 +707,28 @@ async function initDragDrop() {
 // Keyboard Shortcuts
 function initKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
+    // Ctrl+N - New file
+    if (e.ctrlKey && e.key === 'n') {
+      e.preventDefault();
+      newFile();
+    }
+
     // Ctrl+O - Open file
     if (e.ctrlKey && e.key === 'o') {
       e.preventDefault();
       openFile();
+    }
+
+    // Ctrl+S - Save
+    if (e.ctrlKey && !e.shiftKey && e.key === 's') {
+      e.preventDefault();
+      saveFile();
+    }
+
+    // Ctrl+Shift+S - Save As
+    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+      e.preventDefault();
+      saveFileAs();
     }
 
     // Ctrl+W - Close tab
@@ -496,17 +756,68 @@ function initKeyboardShortcuts() {
       e.preventDefault();
       toggleOutline();
     }
+
+    // Ctrl+1 - Edit mode
+    if (e.ctrlKey && e.key === '1') {
+      e.preventDefault();
+      setViewMode('edit');
+    }
+
+    // Ctrl+2 - Split mode
+    if (e.ctrlKey && e.key === '2') {
+      e.preventDefault();
+      setViewMode('split');
+    }
+
+    // Ctrl+3 - Preview mode
+    if (e.ctrlKey && e.key === '3') {
+      e.preventDefault();
+      setViewMode('preview');
+    }
+
+    // F11 - Fullscreen
+    if (e.key === 'F11') {
+      e.preventDefault();
+      toggleFullscreen();
+    }
   });
 }
 
 // Event Listeners
 function initEventListeners() {
   // Toolbar buttons
+  document.getElementById('btn-new').addEventListener('click', newFile);
   document.getElementById('btn-open').addEventListener('click', openFile);
-  document.getElementById('btn-open-welcome').addEventListener('click', openFile);
+  document.getElementById('btn-save').addEventListener('click', saveFile);
   document.getElementById('btn-outline').addEventListener('click', toggleOutline);
   document.getElementById('btn-close-outline').addEventListener('click', toggleOutline);
   document.getElementById('btn-theme').addEventListener('click', cycleTheme);
+  document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+
+  // Welcome buttons
+  document.getElementById('btn-new-welcome').addEventListener('click', newFile);
+  document.getElementById('btn-open-welcome').addEventListener('click', openFile);
+
+  // View mode buttons
+  document.getElementById('btn-mode-edit').addEventListener('click', () => setViewMode('edit'));
+  document.getElementById('btn-mode-split').addEventListener('click', () => setViewMode('split'));
+  document.getElementById('btn-mode-preview').addEventListener('click', () => setViewMode('preview'));
+
+  // Editor input
+  document.getElementById('editor').addEventListener('input', handleEditorInput);
+
+  // Handle tab key in editor
+  document.getElementById('editor').addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const editor = e.target;
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
+      editor.selectionStart = editor.selectionEnd = start + 2;
+      handleEditorInput();
+    }
+  });
 }
 
 // Initialize App
@@ -516,4 +827,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initEventListeners();
   initDragDrop();
   initKeyboardShortcuts();
+  initResizeHandle();
+  setViewMode('split');
+
+  // Try to restore auto-saved content
+  if (!loadAutoSave()) {
+    showWelcome();
+  }
 });

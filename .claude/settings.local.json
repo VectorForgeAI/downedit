@@ -8,7 +8,10 @@
       "Bash(timeout:*)",
       "Bash(taskkill:*)",
       "Bash(npm run dev:*)",
-      "WebFetch(domain:markdownforge.com)"
+      "WebFetch(domain:markdownforge.com)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

@@ -11,11 +11,23 @@
     <!-- Toolbar -->
     <header class="toolbar">
       <div class="toolbar-left">
+        <button id="btn-new" class="toolbar-btn" title="New File (Ctrl+N)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+          </svg>
+          <span>New</span>
+        </button>
         <button id="btn-open" class="toolbar-btn" title="Open File (Ctrl+O)">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5z"/>
           </svg>
           <span>Open</span>
+        </button>
+        <button id="btn-save" class="toolbar-btn" title="Save (Ctrl+S)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1z"/>
+          </svg>
+          <span>Save</span>
         </button>
         <div class="toolbar-divider"></div>
         <button id="btn-outline" class="toolbar-btn" title="Toggle Outline (Ctrl+Shift+O)">
@@ -25,7 +37,19 @@
           <span>Outline</span>
         </button>
       </div>
+      <div class="toolbar-center">
+        <div class="view-mode-toggle">
+          <button id="btn-mode-edit" class="mode-btn" title="Edit Mode (Ctrl+1)">Edit</button>
+          <button id="btn-mode-split" class="mode-btn active" title="Split Mode (Ctrl+2)">Split</button>
+          <button id="btn-mode-preview" class="mode-btn" title="Preview Mode (Ctrl+3)">Preview</button>
+        </div>
+      </div>
       <div class="toolbar-right">
+        <button id="btn-fullscreen" class="toolbar-btn" title="Toggle Fullscreen (F11)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5M.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5"/>
+          </svg>
+        </button>
         <button id="btn-theme" class="toolbar-btn" title="Toggle Theme">
           <svg id="icon-theme" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8m.5-9.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m0 11a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m5-5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m-11 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m9.743-4.036a.5.5 0 1 1-.707-.707.5.5 0 0 1 .707.707m-7.779 7.779a.5.5 0 1 1-.707-.707.5.5 0 0 1 .707.707m7.072 0a.5.5 0 1 1 .707-.707.5.5 0 0 1-.707.707m-7.779-7.779a.5.5 0 1 1 .707-.707.5.5 0 0 1-.707.707"/>
@@ -65,20 +89,46 @@
             </svg>
           </div>
           <h2>Welcome to MarkdownViewer</h2>
-          <p>Open a markdown file to get started</p>
+          <p>Open a markdown file to get started, or create a new one</p>
           <div class="welcome-actions">
-            <button id="btn-open-welcome" class="btn-primary">Open File</button>
+            <button id="btn-new-welcome" class="btn-primary">New File</button>
+            <button id="btn-open-welcome" class="btn-secondary">Open File</button>
           </div>
           <div class="welcome-hint">
-            <p>Or drag and drop a .md file here</p>
-            <p class="shortcut-hint">Ctrl+O to open file</p>
+            <p>Or drag and drop a .md or .txt file here</p>
+            <p class="shortcut-hint">Ctrl+N new file &bull; Ctrl+O open file</p>
           </div>
         </div>
-        <div id="viewer" class="markdown-viewer hidden">
-          <!-- Rendered markdown will appear here -->
+
+        <!-- Split editor view -->
+        <div id="editor-container" class="editor-container hidden">
+          <div id="editor-pane" class="editor-pane">
+            <textarea id="editor" class="editor" placeholder="Start typing your markdown here..." spellcheck="false"></textarea>
+          </div>
+          <div id="resize-handle" class="resize-handle"></div>
+          <div id="preview-pane" class="preview-pane">
+            <div id="viewer" class="markdown-viewer">
+              <!-- Rendered markdown will appear here -->
+            </div>
+          </div>
         </div>
       </main>
     </div>
+
+    <!-- Status bar -->
+    <footer id="status-bar" class="status-bar hidden">
+      <div class="status-left">
+        <span id="status-autosave" class="status-item">
+          <span class="autosave-indicator"></span>
+          <span id="autosave-text">Auto-saved</span>
+        </span>
+      </div>
+      <div class="status-right">
+        <span id="status-wordcount" class="status-item">0 words</span>
+        <span class="status-divider">&bull;</span>
+        <span id="status-charcount" class="status-item">0 characters</span>
+      </div>
+    </footer>
   </div>
 
   <script type="module" src="/src/main.js"></script>
