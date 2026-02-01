@@ -17,7 +17,9 @@
     "@tauri-apps/api": "^2.9.1",
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
+    "docx": "^9.5.1",
     "highlight.js": "^11.11.1",
+    "jspdf": "^4.0.0",
     "marked": "^17.0.1"
   }
 }

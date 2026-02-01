@@ -38,6 +38,41 @@
           <span>History</span>
         </button>
         <div class="toolbar-divider"></div>
+        <div class="export-dropdown">
+          <button id="btn-export" class="toolbar-btn" title="Export">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+            </svg>
+            <span>Export</span>
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+            </svg>
+          </button>
+          <div id="export-menu" class="export-dropdown-menu hidden">
+            <button id="export-pdf" class="dropdown-item">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                <path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029z"/>
+              </svg>
+              Export to PDF
+            </button>
+            <button id="export-docx" class="dropdown-item">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+                <path d="M4.5 12.5A.5.5 0 0 1 5 12h3a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm0-2A.5.5 0 0 1 5 10h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm0-2A.5.5 0 0 1 5 8h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm0-2A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5z"/>
+              </svg>
+              Export to Word
+            </button>
+            <button id="export-html" class="dropdown-item">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>
+              </svg>
+              Export to HTML
+            </button>
+          </div>
+        </div>
+        <div class="toolbar-divider"></div>
         <button id="btn-outline" class="toolbar-btn" title="Toggle Outline (Ctrl+Shift+O)">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path fill-rule="evenodd" d="M2 2.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5zM5 3.5A.5.5 0 0 1 5.5 3h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M5.5 7a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1zm0 4a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1zM2 7a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1A.5.5 0 0 0 3 7zm-.5 4.5A.5.5 0 0 1 2 11h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5z"/>
@@ -328,6 +363,54 @@
         <div class="modal-footer">
           <button class="btn-secondary" data-close>Cancel</button>
           <button id="code-insert" class="btn-primary">Insert</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF Export Dialog -->
+    <div id="pdf-dialog" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Export to PDF</h3>
+          <button class="modal-close" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="pdf-theme">Theme</label>
+            <select id="pdf-theme">
+              <option value="professional">Professional</option>
+              <option value="academic">Academic</option>
+              <option value="minimal">Minimal</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pdf-pagesize">Page Size</label>
+              <select id="pdf-pagesize">
+                <option value="a4">A4</option>
+                <option value="letter">Letter</option>
+                <option value="legal">Legal</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pdf-margin">Margin (mm)</label>
+              <input type="number" id="pdf-margin" value="20" min="5" max="50">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pdf-fontsize">Font Size (pt)</label>
+              <input type="number" id="pdf-fontsize" value="11" min="8" max="16">
+            </div>
+            <div class="form-group">
+              <label for="pdf-lineheight">Line Height</label>
+              <input type="number" id="pdf-lineheight" value="1.5" min="1" max="3" step="0.1">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" data-close>Cancel</button>
+          <button id="pdf-export-btn" class="btn-primary">Export PDF</button>
         </div>
       </div>
     </div>

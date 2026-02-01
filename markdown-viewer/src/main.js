@@ -3,6 +3,8 @@ import { Marked } from 'marked';
 import hljs from 'highlight.js/lib/core';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { jsPDF } from 'jspdf';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
 
 // Import common languages for syntax highlighting
 import javascript from 'highlight.js/lib/languages/javascript';
@@ -1068,6 +1070,553 @@ function insertCodeBlock() {
   closeDialog('code-dialog');
 }
 
+// ==========================================
+// PHASE IV: Export Functions
+// ==========================================
+
+// Export dropdown toggle
+function toggleExportMenu() {
+  const menu = document.getElementById('export-menu');
+  menu.classList.toggle('hidden');
+}
+
+// Close export menu when clicking outside
+function closeExportMenu() {
+  document.getElementById('export-menu').classList.add('hidden');
+}
+
+// PDF Export
+function openPdfDialog() {
+  closeExportMenu();
+  openDialog('pdf-dialog');
+}
+
+async function exportToPdf() {
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab) return;
+
+  const theme = document.getElementById('pdf-theme').value;
+  const pageSize = document.getElementById('pdf-pagesize').value;
+  const margin = parseInt(document.getElementById('pdf-margin').value) || 20;
+  const fontSize = parseInt(document.getElementById('pdf-fontsize').value) || 11;
+  const lineHeight = parseFloat(document.getElementById('pdf-lineheight').value) || 1.5;
+
+  closeDialog('pdf-dialog');
+
+  // Get page dimensions
+  const pageSizes = {
+    a4: [210, 297],
+    letter: [216, 279],
+    legal: [216, 356]
+  };
+  const [pageWidth, pageHeight] = pageSizes[pageSize] || pageSizes.a4;
+
+  // Theme colors
+  const themes = {
+    professional: { heading: '#0066cc', text: '#1a1a1a', code: '#f6f8fa' },
+    academic: { heading: '#333333', text: '#1a1a1a', code: '#f0f0f0' },
+    minimal: { heading: '#000000', text: '#333333', code: '#ffffff' }
+  };
+  const colors = themes[theme] || themes.professional;
+
+  // Create PDF
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: pageSize === 'a4' ? 'a4' : pageSize
+  });
+
+  // Parse markdown to get content
+  const content = tab.content;
+  const lines = content.split('\n');
+
+  let y = margin;
+  const maxWidth = pageWidth - (margin * 2);
+  const lineSpacing = fontSize * 0.35 * lineHeight;
+
+  // Set default font
+  pdf.setFont('helvetica');
+  pdf.setFontSize(fontSize);
+
+  for (const line of lines) {
+    // Check for page break
+    if (y > pageHeight - margin - 10) {
+      pdf.addPage();
+      y = margin;
+    }
+
+    // Handle different markdown elements
+    if (line.startsWith('# ')) {
+      // H1
+      pdf.setFontSize(fontSize * 2);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(colors.heading);
+      const text = line.substring(2);
+      const splitText = pdf.splitTextToSize(text, maxWidth);
+      pdf.text(splitText, margin, y);
+      y += splitText.length * fontSize * 0.7 + lineSpacing * 2;
+      pdf.setFontSize(fontSize);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(colors.text);
+    } else if (line.startsWith('## ')) {
+      // H2
+      pdf.setFontSize(fontSize * 1.5);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(colors.heading);
+      const text = line.substring(3);
+      const splitText = pdf.splitTextToSize(text, maxWidth);
+      pdf.text(splitText, margin, y);
+      y += splitText.length * fontSize * 0.55 + lineSpacing * 1.5;
+      pdf.setFontSize(fontSize);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(colors.text);
+    } else if (line.startsWith('### ')) {
+      // H3
+      pdf.setFontSize(fontSize * 1.2);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(colors.heading);
+      const text = line.substring(4);
+      const splitText = pdf.splitTextToSize(text, maxWidth);
+      pdf.text(splitText, margin, y);
+      y += splitText.length * fontSize * 0.45 + lineSpacing;
+      pdf.setFontSize(fontSize);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(colors.text);
+    } else if (line.startsWith('- ') || line.startsWith('* ')) {
+      // Bullet list
+      const text = '• ' + line.substring(2);
+      const splitText = pdf.splitTextToSize(text, maxWidth - 5);
+      pdf.text(splitText, margin + 5, y);
+      y += splitText.length * lineSpacing;
+    } else if (/^\d+\.\s/.test(line)) {
+      // Numbered list
+      const splitText = pdf.splitTextToSize(line, maxWidth - 5);
+      pdf.text(splitText, margin + 5, y);
+      y += splitText.length * lineSpacing;
+    } else if (line.startsWith('> ')) {
+      // Blockquote
+      pdf.setTextColor('#666666');
+      const text = line.substring(2);
+      const splitText = pdf.splitTextToSize(text, maxWidth - 10);
+      // Draw left border
+      pdf.setDrawColor('#cccccc');
+      pdf.setLineWidth(0.5);
+      pdf.line(margin + 2, y - lineSpacing * 0.5, margin + 2, y + splitText.length * lineSpacing - lineSpacing * 0.5);
+      pdf.text(splitText, margin + 8, y);
+      y += splitText.length * lineSpacing;
+      pdf.setTextColor(colors.text);
+    } else if (line.startsWith('```')) {
+      // Code block - skip the fence
+      continue;
+    } else if (line === '---' || line === '***') {
+      // Horizontal rule
+      pdf.setDrawColor('#e0e0e0');
+      pdf.setLineWidth(0.3);
+      pdf.line(margin, y, pageWidth - margin, y);
+      y += lineSpacing;
+    } else if (line.trim() === '') {
+      // Empty line
+      y += lineSpacing * 0.5;
+    } else {
+      // Regular paragraph
+      // Handle inline formatting (bold, italic) by stripping markers
+      let text = line
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+      const splitText = pdf.splitTextToSize(text, maxWidth);
+      pdf.text(splitText, margin, y);
+      y += splitText.length * lineSpacing;
+    }
+  }
+
+  // Save PDF
+  const fileName = tab.fileName.replace(/\.(md|markdown|txt)$/, '') + '.pdf';
+  pdf.save(fileName);
+}
+
+// DOCX Export
+async function exportToDocx() {
+  closeExportMenu();
+
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab) return;
+
+  const content = tab.content;
+  const lines = content.split('\n');
+  const children = [];
+
+  let inCodeBlock = false;
+  let codeBlockLines = [];
+
+  for (const line of lines) {
+    // Handle code blocks
+    if (line.startsWith('```')) {
+      if (inCodeBlock) {
+        // End code block
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: codeBlockLines.join('\n'),
+                font: 'Consolas',
+                size: 20,
+              })
+            ],
+            shading: { fill: 'F0F0F0' },
+            spacing: { before: 100, after: 100 },
+          })
+        );
+        codeBlockLines = [];
+        inCodeBlock = false;
+      } else {
+        inCodeBlock = true;
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeBlockLines.push(line);
+      continue;
+    }
+
+    // H1
+    if (line.startsWith('# ')) {
+      children.push(
+        new Paragraph({
+          text: line.substring(2),
+          heading: HeadingLevel.HEADING_1,
+          spacing: { before: 240, after: 120 },
+        })
+      );
+    }
+    // H2
+    else if (line.startsWith('## ')) {
+      children.push(
+        new Paragraph({
+          text: line.substring(3),
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 200, after: 100 },
+        })
+      );
+    }
+    // H3
+    else if (line.startsWith('### ')) {
+      children.push(
+        new Paragraph({
+          text: line.substring(4),
+          heading: HeadingLevel.HEADING_3,
+          spacing: { before: 160, after: 80 },
+        })
+      );
+    }
+    // H4
+    else if (line.startsWith('#### ')) {
+      children.push(
+        new Paragraph({
+          text: line.substring(5),
+          heading: HeadingLevel.HEADING_4,
+          spacing: { before: 120, after: 60 },
+        })
+      );
+    }
+    // Bullet list
+    else if (line.startsWith('- ') || line.startsWith('* ')) {
+      children.push(
+        new Paragraph({
+          text: line.substring(2),
+          bullet: { level: 0 },
+        })
+      );
+    }
+    // Numbered list
+    else if (/^\d+\.\s/.test(line)) {
+      const text = line.replace(/^\d+\.\s/, '');
+      children.push(
+        new Paragraph({
+          text: text,
+          numbering: { reference: 'default-numbering', level: 0 },
+        })
+      );
+    }
+    // Blockquote
+    else if (line.startsWith('> ')) {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: line.substring(2),
+              italics: true,
+              color: '666666',
+            })
+          ],
+          indent: { left: 720 },
+          border: {
+            left: { style: BorderStyle.SINGLE, size: 12, color: 'CCCCCC' },
+          },
+        })
+      );
+    }
+    // Horizontal rule
+    else if (line === '---' || line === '***') {
+      children.push(
+        new Paragraph({
+          border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: 'E0E0E0' } },
+          spacing: { before: 200, after: 200 },
+        })
+      );
+    }
+    // Empty line
+    else if (line.trim() === '') {
+      children.push(new Paragraph({ text: '' }));
+    }
+    // Regular paragraph with inline formatting
+    else {
+      const textRuns = parseInlineFormatting(line);
+      children.push(
+        new Paragraph({
+          children: textRuns,
+          spacing: { after: 120 },
+        })
+      );
+    }
+  }
+
+  // Create document
+  const doc = new Document({
+    numbering: {
+      config: [{
+        reference: 'default-numbering',
+        levels: [{
+          level: 0,
+          format: 'decimal',
+          text: '%1.',
+          alignment: AlignmentType.START,
+        }],
+      }],
+    },
+    sections: [{
+      children: children,
+    }],
+  });
+
+  // Generate and download
+  const blob = await Packer.toBlob(doc);
+  const fileName = tab.fileName.replace(/\.(md|markdown|txt)$/, '') + '.docx';
+
+  // Create download link
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Parse inline markdown formatting
+function parseInlineFormatting(text) {
+  const runs = [];
+  let remaining = text;
+
+  // Simple regex-based parsing for bold, italic, code, and links
+  const patterns = [
+    { regex: /\*\*([^*]+)\*\*/, bold: true },
+    { regex: /\*([^*]+)\*/, italics: true },
+    { regex: /`([^`]+)`/, font: 'Consolas' },
+    { regex: /\[([^\]]+)\]\(([^)]+)\)/, link: true },
+  ];
+
+  while (remaining.length > 0) {
+    let earliestMatch = null;
+    let earliestIndex = Infinity;
+    let matchedPattern = null;
+
+    for (const pattern of patterns) {
+      const match = remaining.match(pattern.regex);
+      if (match && match.index < earliestIndex) {
+        earliestMatch = match;
+        earliestIndex = match.index;
+        matchedPattern = pattern;
+      }
+    }
+
+    if (earliestMatch && earliestIndex < remaining.length) {
+      // Add text before the match
+      if (earliestIndex > 0) {
+        runs.push(new TextRun({ text: remaining.substring(0, earliestIndex) }));
+      }
+
+      // Add the formatted text
+      if (matchedPattern.link) {
+        runs.push(new TextRun({
+          text: earliestMatch[1],
+          color: '0066CC',
+          underline: {},
+        }));
+      } else {
+        runs.push(new TextRun({
+          text: earliestMatch[1],
+          bold: matchedPattern.bold,
+          italics: matchedPattern.italics,
+          font: matchedPattern.font,
+        }));
+      }
+
+      remaining = remaining.substring(earliestIndex + earliestMatch[0].length);
+    } else {
+      // No more matches, add remaining text
+      runs.push(new TextRun({ text: remaining }));
+      break;
+    }
+  }
+
+  return runs.length > 0 ? runs : [new TextRun({ text: text })];
+}
+
+// HTML Export
+async function exportToHtml() {
+  closeExportMenu();
+
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab) return;
+
+  // Generate HTML with styling
+  const renderedContent = marked.parse(tab.content);
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(tab.fileName)}</title>
+  <style>
+    :root {
+      --bg-primary: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --accent: #0066cc;
+      --border: #e0e0e0;
+      --code-bg: #f6f8fa;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1e1e1e;
+        --text-primary: #e0e0e0;
+        --text-secondary: #a0a0a0;
+        --accent: #4da6ff;
+        --border: #404040;
+        --code-bg: #2d2d2d;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 24px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    h1 { font-size: 2em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
+    h2 { font-size: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
+    h3 { font-size: 1.25em; }
+    h4 { font-size: 1em; }
+
+    p { margin-bottom: 16px; }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    code {
+      font-family: 'Cascadia Code', Consolas, monospace;
+      font-size: 0.9em;
+      padding: 0.2em 0.4em;
+      background: var(--code-bg);
+      border-radius: 4px;
+    }
+
+    pre {
+      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--code-bg);
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    blockquote {
+      margin-bottom: 16px;
+      padding: 0 1em;
+      border-left: 4px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    ul, ol { margin-bottom: 16px; padding-left: 2em; }
+    li { margin-bottom: 4px; }
+
+    table {
+      width: 100%;
+      margin-bottom: 16px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+
+    th { background: var(--code-bg); font-weight: 600; }
+
+    hr {
+      margin: 24px 0;
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    img { max-width: 100%; height: auto; border-radius: 6px; }
+  </style>
+</head>
+<body>
+${renderedContent}
+</body>
+</html>`;
+
+  // Create download
+  const blob = new Blob([html], { type: 'text/html' });
+  const fileName = tab.fileName.replace(/\.(md|markdown|txt)$/, '') + '.html';
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // File Operations
 function newFile() {
   const fileName = `Untitled-${state.newFileCounter++}.md`;
@@ -1541,6 +2090,35 @@ function initDialogs() {
 
   // Code dialog
   document.getElementById('code-insert').addEventListener('click', insertCodeBlock);
+
+  // Export functionality
+  initExportListeners();
+}
+
+function initExportListeners() {
+  // Export dropdown toggle
+  const exportBtn = document.getElementById('btn-export');
+  const exportMenu = document.getElementById('export-menu');
+
+  exportBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleExportMenu();
+  });
+
+  // Close export menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!exportBtn.contains(e.target) && !exportMenu.contains(e.target)) {
+      closeExportMenu();
+    }
+  });
+
+  // Export options
+  document.getElementById('export-pdf').addEventListener('click', openPdfDialog);
+  document.getElementById('export-docx').addEventListener('click', exportToDocx);
+  document.getElementById('export-html').addEventListener('click', exportToHtml);
+
+  // PDF export button in dialog
+  document.getElementById('pdf-export-btn').addEventListener('click', exportToPdf);
 }
 
 // Initialize App
