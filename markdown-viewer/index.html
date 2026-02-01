@@ -311,40 +311,69 @@
 
     <!-- Table Dialog -->
     <div id="table-dialog" class="modal-overlay hidden">
-      <div class="modal modal-lg">
+      <div class="modal modal-xl">
         <div class="modal-header">
           <h3>Insert Table</h3>
           <button class="modal-close" data-close>&times;</button>
         </div>
         <div class="modal-body">
-          <div class="table-size-picker">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="table-rows">Rows</label>
-                <input type="number" id="table-rows" value="3" min="1" max="20">
-              </div>
-              <div class="form-group">
-                <label for="table-cols">Columns</label>
-                <input type="number" id="table-cols" value="3" min="1" max="10">
-              </div>
+          <div class="table-editor-container">
+            <!-- Toolbar -->
+            <div class="table-editor-toolbar">
+              <button id="table-add-row" class="table-toolbar-btn" title="Add Row">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                </svg>
+                Add Row
+              </button>
+              <button id="table-add-col" class="table-toolbar-btn" title="Add Column">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                </svg>
+                Add Column
+              </button>
+              <div class="table-toolbar-divider"></div>
+              <button id="table-remove-row" class="table-toolbar-btn" title="Remove Row">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M2.5 8a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+                </svg>
+                Remove Row
+              </button>
+              <button id="table-remove-col" class="table-toolbar-btn" title="Remove Column">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M2.5 8a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+                </svg>
+                Remove Column
+              </button>
             </div>
-            <div class="form-group">
-              <label>Column Alignment</label>
+            
+            <!-- Visual Table Editor -->
+            <div class="table-grid-wrapper">
+              <table id="table-grid" class="table-grid">
+                <!-- Generated dynamically -->
+              </table>
+            </div>
+            
+            <p class="table-hint">Use Tab to move between cells. First row is the header.</p>
+            
+            <!-- Alignment Controls -->
+            <div class="table-alignment-section">
+              <label>Column Alignment:</label>
               <div id="table-alignment" class="alignment-controls">
                 <!-- Will be populated dynamically -->
               </div>
             </div>
-            <div class="form-group">
-              <label>Preview</label>
-              <div id="table-preview" class="table-preview">
-                <!-- Table preview will be shown here -->
-              </div>
+            
+            <!-- Markdown Preview -->
+            <div class="table-markdown-section">
+              <label>Markdown Output:</label>
+              <pre id="table-markdown-preview" class="table-markdown-preview"></pre>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" data-close>Cancel</button>
-          <button id="table-insert" class="btn-primary">Insert</button>
+          <button id="table-insert" class="btn-primary">Insert Table</button>
         </div>
       </div>
     </div>

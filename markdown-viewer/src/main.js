@@ -1217,66 +1217,203 @@ function insertImage() {
   selectedImageData = null;
 }
 
-// Table dialog
-let tableAlignments = [];
+// Table dialog - Visual Editor
+let tableData = {
+  rows: 3,
+  cols: 3,
+  cells: [],  // 2D array: cells[row][col]
+  alignments: []
+};
 
 function openTableDialog() {
-  updateTablePreview();
+  // Initialize with default 3x3 table
+  tableData = {
+    rows: 3,
+    cols: 3,
+    cells: [],
+    alignments: []
+  };
+  
+  // Initialize cells with empty values (row 0 is header)
+  for (let r = 0; r < tableData.rows; r++) {
+    tableData.cells[r] = [];
+    for (let c = 0; c < tableData.cols; c++) {
+      tableData.cells[r][c] = r === 0 ? `Header ${c + 1}` : '';
+    }
+  }
+  
+  // Initialize alignments
+  for (let c = 0; c < tableData.cols; c++) {
+    tableData.alignments[c] = 'left';
+  }
+  
+  renderTableGrid();
   openDialog('table-dialog');
 }
 
-function updateTablePreview() {
-  const rows = parseInt(document.getElementById('table-rows').value) || 3;
-  const cols = parseInt(document.getElementById('table-cols').value) || 3;
-
+function renderTableGrid() {
+  const tableGrid = document.getElementById('table-grid');
+  tableGrid.innerHTML = '';
+  
+  // Build table HTML
+  for (let r = 0; r < tableData.rows; r++) {
+    const tr = document.createElement('tr');
+    
+    // Row number cell
+    const rowNumCell = document.createElement(r === 0 ? 'th' : 'td');
+    rowNumCell.className = 'row-number';
+    rowNumCell.textContent = r === 0 ? '#' : r;
+    tr.appendChild(rowNumCell);
+    
+    // Data cells
+    for (let c = 0; c < tableData.cols; c++) {
+      const cell = document.createElement(r === 0 ? 'th' : 'td');
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = tableData.cells[r]?.[c] || '';
+      input.dataset.row = r;
+      input.dataset.col = c;
+      input.placeholder = r === 0 ? `Header ${c + 1}` : '';
+      
+      // Update data on input
+      input.addEventListener('input', (e) => {
+        const row = parseInt(e.target.dataset.row);
+        const col = parseInt(e.target.dataset.col);
+        if (!tableData.cells[row]) tableData.cells[row] = [];
+        tableData.cells[row][col] = e.target.value;
+        updateTableMarkdownPreview();
+      });
+      
+      // Tab navigation
+      input.addEventListener('keydown', (e) => {
+        const row = parseInt(e.target.dataset.row);
+        const col = parseInt(e.target.dataset.col);
+        
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          let nextRow = row;
+          let nextCol = col + (e.shiftKey ? -1 : 1);
+          
+          if (nextCol >= tableData.cols) {
+            nextCol = 0;
+            nextRow = row + 1;
+          } else if (nextCol < 0) {
+            nextCol = tableData.cols - 1;
+            nextRow = row - 1;
+          }
+          
+          if (nextRow >= 0 && nextRow < tableData.rows) {
+            const nextInput = tableGrid.querySelector(`input[data-row="${nextRow}"][data-col="${nextCol}"]`);
+            if (nextInput) nextInput.focus();
+          }
+        } else if (e.key === 'ArrowUp' && row > 0) {
+          const nextInput = tableGrid.querySelector(`input[data-row="${row - 1}"][data-col="${col}"]`);
+          if (nextInput) nextInput.focus();
+        } else if (e.key === 'ArrowDown' && row < tableData.rows - 1) {
+          const nextInput = tableGrid.querySelector(`input[data-row="${row + 1}"][data-col="${col}"]`);
+          if (nextInput) nextInput.focus();
+        }
+      });
+      
+      cell.appendChild(input);
+      tr.appendChild(cell);
+    }
+    
+    tableGrid.appendChild(tr);
+  }
+  
   // Update alignment controls
-  const alignmentContainer = document.getElementById('table-alignment');
-  alignmentContainer.innerHTML = '';
-  tableAlignments = tableAlignments.slice(0, cols);
-  while (tableAlignments.length < cols) {
-    tableAlignments.push('left');
-  }
-
-  for (let i = 0; i < cols; i++) {
-    const group = document.createElement('div');
-    group.className = 'alignment-group';
-    group.innerHTML = `
-      <span>Col ${i + 1}</span>
-      <button class="alignment-btn ${tableAlignments[i] === 'left' ? 'active' : ''}" data-col="${i}" data-align="left">L</button>
-      <button class="alignment-btn ${tableAlignments[i] === 'center' ? 'active' : ''}" data-col="${i}" data-align="center">C</button>
-      <button class="alignment-btn ${tableAlignments[i] === 'right' ? 'active' : ''}" data-col="${i}" data-align="right">R</button>
-    `;
-    alignmentContainer.appendChild(group);
-  }
-
-  // Add alignment button listeners
-  alignmentContainer.querySelectorAll('.alignment-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const col = parseInt(btn.dataset.col);
-      tableAlignments[col] = btn.dataset.align;
-      updateTablePreview();
-    });
-  });
-
-  // Generate preview
-  const preview = document.getElementById('table-preview');
-  preview.textContent = generateTableMarkdown(rows, cols, tableAlignments);
+  renderAlignmentControls();
+  updateTableMarkdownPreview();
 }
 
-function generateTableMarkdown(rows, cols, alignments) {
-  const lines = [];
+function renderAlignmentControls() {
+  const container = document.getElementById('table-alignment');
+  container.innerHTML = '';
+  
+  for (let c = 0; c < tableData.cols; c++) {
+    const control = document.createElement('div');
+    control.className = 'alignment-control';
+    control.innerHTML = `
+      <label>Col ${c + 1}:</label>
+      <select data-col="${c}">
+        <option value="left" ${tableData.alignments[c] === 'left' ? 'selected' : ''}>Left</option>
+        <option value="center" ${tableData.alignments[c] === 'center' ? 'selected' : ''}>Center</option>
+        <option value="right" ${tableData.alignments[c] === 'right' ? 'selected' : ''}>Right</option>
+      </select>
+    `;
+    
+    control.querySelector('select').addEventListener('change', (e) => {
+      const col = parseInt(e.target.dataset.col);
+      tableData.alignments[col] = e.target.value;
+      updateTableMarkdownPreview();
+    });
+    
+    container.appendChild(control);
+  }
+}
 
+function addTableRow() {
+  tableData.rows++;
+  tableData.cells[tableData.rows - 1] = [];
+  for (let c = 0; c < tableData.cols; c++) {
+    tableData.cells[tableData.rows - 1][c] = '';
+  }
+  renderTableGrid();
+}
+
+function removeTableRow() {
+  if (tableData.rows > 2) {  // Keep at least header + 1 row
+    tableData.rows--;
+    tableData.cells.pop();
+    renderTableGrid();
+  }
+}
+
+function addTableColumn() {
+  if (tableData.cols < 10) {  // Max 10 columns
+    tableData.cols++;
+    tableData.alignments.push('left');
+    for (let r = 0; r < tableData.rows; r++) {
+      if (!tableData.cells[r]) tableData.cells[r] = [];
+      tableData.cells[r].push(r === 0 ? `Header ${tableData.cols}` : '');
+    }
+    renderTableGrid();
+  }
+}
+
+function removeTableColumn() {
+  if (tableData.cols > 1) {  // Keep at least 1 column
+    tableData.cols--;
+    tableData.alignments.pop();
+    for (let r = 0; r < tableData.rows; r++) {
+      if (tableData.cells[r]) {
+        tableData.cells[r].pop();
+      }
+    }
+    renderTableGrid();
+  }
+}
+
+function updateTableMarkdownPreview() {
+  const preview = document.getElementById('table-markdown-preview');
+  preview.textContent = generateTableMarkdown();
+}
+
+function generateTableMarkdown() {
+  const lines = [];
+  
   // Header row
   const headerCells = [];
-  for (let c = 0; c < cols; c++) {
-    headerCells.push(`Header ${c + 1}`);
+  for (let c = 0; c < tableData.cols; c++) {
+    headerCells.push(tableData.cells[0]?.[c] || `Header ${c + 1}`);
   }
   lines.push('| ' + headerCells.join(' | ') + ' |');
-
+  
   // Separator row with alignment
   const separatorCells = [];
-  for (let c = 0; c < cols; c++) {
-    const align = alignments[c] || 'left';
+  for (let c = 0; c < tableData.cols; c++) {
+    const align = tableData.alignments[c] || 'left';
     if (align === 'center') {
       separatorCells.push(':---:');
     } else if (align === 'right') {
@@ -1286,24 +1423,21 @@ function generateTableMarkdown(rows, cols, alignments) {
     }
   }
   lines.push('| ' + separatorCells.join(' | ') + ' |');
-
+  
   // Data rows
-  for (let r = 0; r < rows - 1; r++) {
+  for (let r = 1; r < tableData.rows; r++) {
     const dataCells = [];
-    for (let c = 0; c < cols; c++) {
-      dataCells.push(`Cell ${r + 1},${c + 1}`);
+    for (let c = 0; c < tableData.cols; c++) {
+      dataCells.push(tableData.cells[r]?.[c] || '');
     }
     lines.push('| ' + dataCells.join(' | ') + ' |');
   }
-
+  
   return lines.join('\n');
 }
 
 function insertTable() {
-  const rows = parseInt(document.getElementById('table-rows').value) || 3;
-  const cols = parseInt(document.getElementById('table-cols').value) || 3;
-
-  const markdown = '\n' + generateTableMarkdown(rows, cols, tableAlignments) + '\n';
+  const markdown = '\n' + generateTableMarkdown() + '\n';
   insertAtCursor(markdown);
   closeDialog('table-dialog');
 }
@@ -2436,8 +2570,10 @@ function initDialogs() {
 
   // Table dialog
   document.getElementById('table-insert').addEventListener('click', insertTable);
-  document.getElementById('table-rows').addEventListener('input', updateTablePreview);
-  document.getElementById('table-cols').addEventListener('input', updateTablePreview);
+  document.getElementById('table-add-row').addEventListener('click', addTableRow);
+  document.getElementById('table-remove-row').addEventListener('click', removeTableRow);
+  document.getElementById('table-add-col').addEventListener('click', addTableColumn);
+  document.getElementById('table-remove-col').addEventListener('click', removeTableColumn);
 
   // Code dialog
   document.getElementById('code-insert').addEventListener('click', insertCodeBlock);
