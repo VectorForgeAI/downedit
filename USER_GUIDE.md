@@ -1,6 +1,6 @@
 # down.edit User Guide
 
-Welcome to **down.edit**, a modern Markdown editor for Windows. This guide covers everything you need to know to get the most out of the application.
+Welcome to **down.edit**, a modern Markdown editor for Windows, macOS, and Linux. This guide covers everything you need to know to get the most out of the application.
 
 ---
 
@@ -52,20 +52,31 @@ Welcome to **down.edit**, a modern Markdown editor for Windows. This guide cover
 
 ### Installation
 
-1. Download the latest installer from the releases page:
-   - `down.edit_1.0.0_x64-setup.exe` (recommended)
-   - `down.edit_1.0.0_x64.msi` (alternative)
+Download the latest release from the [GitHub Releases](https://github.com/VectorForgeAI/downedit/releases) page.
+
+#### Windows
+1. Download `down.edit-x.x.x-windows.exe`
 2. Run the installer and follow the on-screen instructions
 3. Launch down.edit from the Start menu or desktop shortcut
 
+#### macOS
+1. Download `down.edit-x.x.x-macos.dmg`
+2. Open the DMG and drag down.edit to Applications
+3. Launch from Applications or use Spotlight search
+
+#### Linux
+1. Download `down.edit-x.x.x-linux.AppImage`
+2. Make executable: `chmod +x down.edit-*.AppImage`
+3. Run the AppImage directly
+
 ### System Requirements
 
-| Requirement | Minimum |
-|-------------|---------|
-| Operating System | Windows 10 version 1803 or later (64-bit) |
-| Memory | 100 MB RAM |
-| Disk Space | 50 MB |
-| Runtime | WebView2 (installed automatically if needed) |
+| Platform | Requirements |
+|----------|--------------|
+| Windows | Windows 10 version 1803+ (64-bit), WebView2 runtime |
+| macOS | macOS 10.15 Catalina or later |
+| Linux | GTK 3, WebKitGTK, modern distribution |
+| All | 100 MB RAM, 50 MB disk space |
 
 ### First Launch
 

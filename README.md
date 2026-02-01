@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>A modern, fast, and feature-rich Markdown editor for Windows</strong>
+  <strong>A modern, fast, and feature-rich Markdown editor for Windows, macOS, and Linux</strong>
 </p>
 
 <p align="center">
@@ -20,7 +20,7 @@
 
 ## Overview
 
-**down.edit** is a lightweight, native Windows application for viewing, editing, and exporting Markdown files. Built with [Tauri](https://tauri.app/) for blazing-fast performance and a small footprint, it delivers a seamless editing experience with real-time preview, syntax highlighting, and professional export capabilities.
+**down.edit** is a lightweight, cross-platform application for viewing, editing, and exporting Markdown files. Built with [Tauri](https://tauri.app/) for blazing-fast performance and a small footprint, it delivers a seamless editing experience with real-time preview, syntax highlighting, and professional export capabilities. Available for Windows, macOS, and Linux.
 
 Whether you're writing documentation, taking notes, or creating content, down.edit provides all the tools you need in a clean, distraction-free interface.
 
@@ -87,19 +87,37 @@ Whether you're writing documentation, taking notes, or creating content, down.ed
 
 ## Installation
 
-### Windows Installer
+Download the latest release from the [Releases](../../releases) page.
 
-1. Download the latest release from the [Releases](../../releases) page
-2. Run `down.edit_1.0.0_x64-setup.exe` or `down.edit_1.0.0_x64.msi`
-3. Follow the installation wizard
-4. Launch down.edit from the Start menu
+### Windows
 
-### System Requirements
+1. Download `down.edit-x.x.x-windows.exe`
+2. Run the installer and follow the wizard
+3. Launch down.edit from the Start menu
 
-- **OS:** Windows 10 version 1803 or later (64-bit)
+**Requirements:** Windows 10 version 1803 or later (64-bit). WebView2 runtime is installed automatically if needed.
+
+### macOS
+
+1. Download `down.edit-x.x.x-macos.dmg`
+2. Open the DMG file
+3. Drag down.edit to your Applications folder
+4. Launch from Applications or Spotlight
+
+**Requirements:** macOS 10.15 (Catalina) or later.
+
+### Linux
+
+1. Download `down.edit-x.x.x-linux.AppImage`
+2. Make it executable: `chmod +x down.edit-x.x.x-linux.AppImage`
+3. Run the AppImage directly
+
+**Requirements:** A modern Linux distribution with GTK 3 and WebKitGTK installed.
+
+### System Requirements (All Platforms)
+
 - **RAM:** 100 MB minimum
 - **Disk:** 50 MB for installation
-- **Runtime:** WebView2 (automatically installed if needed)
 
 ---
 
@@ -207,14 +225,24 @@ npm run tauri dev
 ### Production Build
 
 ```bash
-# Build for Windows
+# Build for your current platform
 npm run tauri build
 ```
 
-Build outputs:
+Build outputs vary by platform:
+
+**Windows:**
 - `src-tauri/target/release/down.edit.exe` - Standalone executable
-- `src-tauri/target/release/bundle/msi/*.msi` - Windows installer
+- `src-tauri/target/release/bundle/msi/*.msi` - MSI installer
 - `src-tauri/target/release/bundle/nsis/*.exe` - NSIS installer
+
+**macOS:**
+- `src-tauri/target/release/bundle/dmg/*.dmg` - Disk image
+- `src-tauri/target/release/bundle/macos/*.app` - Application bundle
+
+**Linux:**
+- `src-tauri/target/release/bundle/appimage/*.AppImage` - Portable AppImage
+- `src-tauri/target/release/bundle/deb/*.deb` - Debian package
 
 ---
 
