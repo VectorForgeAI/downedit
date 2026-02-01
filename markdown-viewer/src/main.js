@@ -1,4 +1,4 @@
-// MarkdownViewer - Main Application
+// Downedit - Main Application
 import { Marked } from 'marked';
 import hljs from 'highlight.js/lib/core';
 import { invoke } from '@tauri-apps/api/core';

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "MarkdownViewer",
+  "productName": "Downedit",
   "version": "1.0.0",
-  "identifier": "com.kittl.markdown-viewer",
+  "identifier": "com.vectorforge.downedit",
   "build": {
     "devUrl": "http://localhost:5173",
     "frontendDist": "../dist",
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "MarkdownViewer",
+        "title": "Downedit",
         "width": 1200,
         "height": 800,
         "minWidth": 600,
