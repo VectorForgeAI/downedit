@@ -3059,6 +3059,384 @@ function closeImportMenu() {
   document.getElementById('import-menu').classList.add('hidden');
 }
 
+// ============================================
+// AI Integration
+// ============================================
+
+// AI Settings state
+const aiState = {
+  provider: '',
+  apiKey: '',
+  model: '',
+  baseUrl: '',
+  isConfigured: false
+};
+
+// Available models per provider
+const AI_MODELS = {
+  anthropic: [
+    { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4 (Latest)' },
+    { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet' },
+    { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku (Fast)' },
+  ],
+  openai: [
+    { id: 'gpt-4o', name: 'GPT-4o (Latest)' },
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast)' },
+    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
+  ],
+  google: [
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (Fast)' },
+  ],
+  perplexity: [
+    { id: 'sonar', name: 'Sonar' },
+    { id: 'sonar-pro', name: 'Sonar Pro' },
+  ],
+  ollama: [
+    { id: 'llama3.2', name: 'Llama 3.2' },
+    { id: 'mistral', name: 'Mistral' },
+    { id: 'codellama', name: 'Code Llama' },
+    { id: 'phi3', name: 'Phi-3' },
+  ]
+};
+
+// Load AI settings from localStorage
+function loadAISettings() {
+  try {
+    const saved = localStorage.getItem('downedit-ai-settings');
+    if (saved) {
+      const settings = JSON.parse(saved);
+      aiState.provider = settings.provider || '';
+      aiState.apiKey = settings.apiKey || '';
+      aiState.model = settings.model || '';
+      aiState.baseUrl = settings.baseUrl || '';
+      aiState.isConfigured = !!(aiState.provider && (aiState.apiKey || aiState.provider === 'ollama'));
+    }
+  } catch (err) {
+    console.error('Error loading AI settings:', err);
+  }
+}
+
+// Save AI settings to localStorage
+function saveAISettings() {
+  try {
+    localStorage.setItem('downedit-ai-settings', JSON.stringify({
+      provider: aiState.provider,
+      apiKey: aiState.apiKey,
+      model: aiState.model,
+      baseUrl: aiState.baseUrl
+    }));
+    aiState.isConfigured = !!(aiState.provider && (aiState.apiKey || aiState.provider === 'ollama'));
+  } catch (err) {
+    console.error('Error saving AI settings:', err);
+  }
+}
+
+// Open AI settings dialog
+function openAISettingsDialog() {
+  const dialog = document.getElementById('ai-settings-dialog');
+  loadAISettings();
+  
+  // Populate form with current settings
+  document.getElementById('ai-provider').value = aiState.provider;
+  document.getElementById('ai-api-key').value = aiState.apiKey;
+  document.getElementById('ai-base-url').value = aiState.baseUrl || 'http://localhost:11434';
+  
+  // Update UI based on provider
+  updateAISettingsUI();
+  
+  // Set model after updating UI (so the options exist)
+  if (aiState.model) {
+    document.getElementById('ai-model').value = aiState.model;
+  }
+  
+  dialog.classList.remove('hidden');
+}
+
+// Update AI settings UI based on selected provider
+function updateAISettingsUI() {
+  const provider = document.getElementById('ai-provider').value;
+  const apiKeyGroup = document.getElementById('ai-api-key-group');
+  const modelGroup = document.getElementById('ai-model-group');
+  const baseUrlGroup = document.getElementById('ai-base-url-group');
+  const modelSelect = document.getElementById('ai-model');
+  const testBtn = document.getElementById('ai-test-btn');
+  const saveBtn = document.getElementById('ai-save-btn');
+  
+  // Reset status
+  hideAIStatus();
+  
+  if (!provider) {
+    apiKeyGroup.classList.add('hidden');
+    modelGroup.classList.add('hidden');
+    baseUrlGroup.classList.add('hidden');
+    testBtn.disabled = true;
+    saveBtn.disabled = true;
+    return;
+  }
+  
+  // Show/hide API key based on provider (Ollama doesn't need one)
+  if (provider === 'ollama') {
+    apiKeyGroup.classList.add('hidden');
+    baseUrlGroup.classList.remove('hidden');
+  } else {
+    apiKeyGroup.classList.remove('hidden');
+    baseUrlGroup.classList.add('hidden');
+  }
+  
+  // Populate model dropdown
+  modelGroup.classList.remove('hidden');
+  const models = AI_MODELS[provider] || [];
+  modelSelect.innerHTML = '<option value="">-- Select Model --</option>' + 
+    models.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  
+  // Enable buttons
+  updateAIButtonStates();
+}
+
+// Update button states
+function updateAIButtonStates() {
+  const provider = document.getElementById('ai-provider').value;
+  const apiKey = document.getElementById('ai-api-key').value;
+  const model = document.getElementById('ai-model').value;
+  const testBtn = document.getElementById('ai-test-btn');
+  const saveBtn = document.getElementById('ai-save-btn');
+  
+  const hasCredentials = provider === 'ollama' || apiKey.trim();
+  testBtn.disabled = !provider || !hasCredentials;
+  saveBtn.disabled = !provider || !hasCredentials || !model;
+}
+
+// Show AI status message
+function showAIStatus(type, message) {
+  const status = document.getElementById('ai-status');
+  const icon = document.getElementById('ai-status-icon');
+  const text = document.getElementById('ai-status-text');
+  
+  status.className = 'ai-status ' + type;
+  
+  if (type === 'success') {
+    icon.textContent = '✓';
+  } else if (type === 'error') {
+    icon.textContent = '✕';
+  } else if (type === 'loading') {
+    icon.textContent = '⟳';
+  }
+  
+  text.textContent = message;
+  status.classList.remove('hidden');
+}
+
+function hideAIStatus() {
+  document.getElementById('ai-status').classList.add('hidden');
+}
+
+// Test AI connection
+async function testAIConnection() {
+  const provider = document.getElementById('ai-provider').value;
+  const apiKey = document.getElementById('ai-api-key').value;
+  const model = document.getElementById('ai-model').value || getDefaultModel(provider);
+  const baseUrl = document.getElementById('ai-base-url').value;
+  
+  showAIStatus('loading', 'Testing connection...');
+  
+  try {
+    const response = await callAI(provider, apiKey, model, baseUrl, 'Say "Hello" in exactly one word.');
+    if (response) {
+      showAIStatus('success', 'Connection successful! Response: ' + response.substring(0, 50));
+    }
+  } catch (err) {
+    showAIStatus('error', 'Connection failed: ' + err.message);
+  }
+}
+
+function getDefaultModel(provider) {
+  const models = AI_MODELS[provider];
+  return models && models.length > 0 ? models[0].id : '';
+}
+
+// Save AI settings
+function saveAISettingsFromDialog() {
+  aiState.provider = document.getElementById('ai-provider').value;
+  aiState.apiKey = document.getElementById('ai-api-key').value;
+  aiState.model = document.getElementById('ai-model').value;
+  aiState.baseUrl = document.getElementById('ai-base-url').value;
+  
+  saveAISettings();
+  showAIStatus('success', 'Settings saved successfully!');
+  
+  setTimeout(() => {
+    document.getElementById('ai-settings-dialog').classList.add('hidden');
+  }, 1000);
+}
+
+// Toggle API key visibility
+function toggleAPIKeyVisibility() {
+  const input = document.getElementById('ai-api-key');
+  const eyeOpen = document.getElementById('ai-key-eye-open');
+  const eyeClosed = document.getElementById('ai-key-eye-closed');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    eyeOpen.classList.add('hidden');
+    eyeClosed.classList.remove('hidden');
+  } else {
+    input.type = 'password';
+    eyeOpen.classList.remove('hidden');
+    eyeClosed.classList.add('hidden');
+  }
+}
+
+// Core AI call function
+async function callAI(provider, apiKey, model, baseUrl, prompt) {
+  switch (provider) {
+    case 'anthropic':
+      return await callAnthropic(apiKey, model, prompt);
+    case 'openai':
+      return await callOpenAI(apiKey, model, 'https://api.openai.com/v1', prompt);
+    case 'google':
+      return await callGoogle(apiKey, model, prompt);
+    case 'perplexity':
+      return await callOpenAI(apiKey, model, 'https://api.perplexity.ai', prompt);
+    case 'ollama':
+      return await callOpenAI('', model, baseUrl || 'http://localhost:11434', prompt);
+    default:
+      throw new Error('Unknown provider: ' + provider);
+  }
+}
+
+// Anthropic API
+async function callAnthropic(apiKey, model, prompt) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: model,
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  
+  const data = await response.json();
+  
+  if (data.error) {
+    throw new Error(data.error.message || 'API error');
+  }
+  
+  return data.content[0].text;
+}
+
+// OpenAI-compatible API (works for OpenAI, Perplexity, Ollama)
+async function callOpenAI(apiKey, model, baseUrl, prompt) {
+  const headers = {
+    'Content-Type': 'application/json'
+  };
+  
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+  
+  // Ollama uses a different endpoint
+  const isOllama = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
+  const endpoint = isOllama ? `${baseUrl}/api/chat` : `${baseUrl}/chat/completions`;
+  
+  const body = isOllama ? {
+    model: model,
+    messages: [{ role: 'user', content: prompt }],
+    stream: false
+  } : {
+    model: model,
+    messages: [{ role: 'user', content: prompt }]
+  };
+  
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(body)
+  });
+  
+  const data = await response.json();
+  
+  if (data.error) {
+    throw new Error(data.error.message || 'API error');
+  }
+  
+  // Ollama returns response differently
+  if (isOllama) {
+    return data.message?.content || '';
+  }
+  
+  return data.choices[0].message.content;
+}
+
+// Google AI API
+async function callGoogle(apiKey, model, prompt) {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }]
+    })
+  });
+  
+  const data = await response.json();
+  
+  if (data.error) {
+    throw new Error(data.error.message || 'API error');
+  }
+  
+  return data.candidates[0].content.parts[0].text;
+}
+
+// Initialize AI settings listeners
+function initAISettingsListeners() {
+  // Open AI settings
+  document.getElementById('btn-ai-settings').addEventListener('click', openAISettingsDialog);
+  
+  // Provider change
+  document.getElementById('ai-provider').addEventListener('change', updateAISettingsUI);
+  
+  // Input changes to update button states
+  document.getElementById('ai-api-key').addEventListener('input', updateAIButtonStates);
+  document.getElementById('ai-model').addEventListener('change', updateAIButtonStates);
+  
+  // Toggle API key visibility
+  document.getElementById('ai-key-toggle').addEventListener('click', toggleAPIKeyVisibility);
+  
+  // Test and save buttons
+  document.getElementById('ai-test-btn').addEventListener('click', testAIConnection);
+  document.getElementById('ai-save-btn').addEventListener('click', saveAISettingsFromDialog);
+  
+  // Close dialog
+  document.querySelectorAll('#ai-settings-dialog [data-close]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('ai-settings-dialog').classList.add('hidden');
+    });
+  });
+}
+
+// High-level AI function for converting ASCII to Mermaid
+async function convertASCIIToMermaid(asciiArt) {
+  if (!aiState.isConfigured) {
+    throw new Error('AI is not configured. Please set up AI in settings.');
+  }
+  
+  const prompt = `Convert this ASCII diagram to Mermaid syntax. Return ONLY the Mermaid code, no explanation, no markdown code fences.
+
+ASCII Diagram:
+${asciiArt}
+
+Mermaid code:`;
+
+  return await callAI(aiState.provider, aiState.apiKey, aiState.model, aiState.baseUrl, prompt);
+}
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing app...');
@@ -3077,6 +3455,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initKeyboardShortcuts();
   initResizeHandle();
   initImportListeners();
+  initAISettingsListeners();
+  loadAISettings();
   setViewMode('split');
 
   // Try to restore auto-saved content
