@@ -222,6 +222,197 @@ function setViewMode(mode) {
   document.getElementById(`btn-mode-${mode}`).classList.add('active');
 }
 
+// ==========================================
+// Markdown Beautifier
+// ==========================================
+
+function openBeautifyDialog() {
+  openDialog('beautify-dialog');
+}
+
+function beautifyMarkdown() {
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab) return;
+
+  // Get options
+  const normalizeHeadings = document.getElementById('beautify-headings').checked;
+  const normalizeLists = document.getElementById('beautify-lists').checked;
+  const listMarker = document.getElementById('beautify-list-marker').value;
+  const fixSpacing = document.getElementById('beautify-spacing').checked;
+  const indentLists = document.getElementById('beautify-indent').checked;
+  const wrapLines = document.getElementById('beautify-wrap').checked;
+  const wrapWidth = parseInt(document.getElementById('beautify-wrap-width').value) || 80;
+  const removeTrailing = document.getElementById('beautify-trailing').checked;
+
+  let content = tab.content;
+  let lines = content.split('\n');
+
+  // Process each line
+  lines = lines.map((line, index) => {
+    // Remove trailing spaces
+    if (removeTrailing) {
+      line = line.replace(/\s+$/, '');
+    }
+
+    // Normalize headings to ATX style (# Heading)
+    if (normalizeHeadings) {
+      // Convert underline-style headings (Setext) to ATX
+      // Check if next line is === or ---
+      if (index < lines.length - 1) {
+        const nextLine = lines[index + 1];
+        if (/^=+\s*$/.test(nextLine)) {
+          lines[index + 1] = ''; // Mark for removal
+          line = '# ' + line.trim();
+        } else if (/^-+\s*$/.test(nextLine) && line.trim() && !/^[-*+]\s/.test(line)) {
+          lines[index + 1] = ''; // Mark for removal
+          line = '## ' + line.trim();
+        }
+      }
+      
+      // Ensure space after # in headings
+      line = line.replace(/^(#{1,6})([^\s#])/, '$1 $2');
+    }
+
+    // Normalize list markers
+    if (normalizeLists) {
+      // Unordered lists - preserve indentation
+      line = line.replace(/^(\s*)[\*\+\-](\s)/, `$1${listMarker}$2`);
+      
+      // Ensure space after list marker
+      line = line.replace(/^(\s*)([\*\+\-])([^\s])/, `$1$2 $3`);
+    }
+
+    // Indent nested lists properly (2 spaces per level)
+    if (indentLists) {
+      const listMatch = line.match(/^(\s*)([\*\+\-]|\d+\.)\s/);
+      if (listMatch) {
+        const currentIndent = listMatch[1].length;
+        // Normalize to multiples of 2 spaces
+        const normalizedIndent = Math.floor(currentIndent / 2) * 2;
+        line = ' '.repeat(normalizedIndent) + line.trimStart();
+      }
+    }
+
+    return line;
+  });
+
+  // Fix spacing - ensure consistent blank lines
+  if (fixSpacing) {
+    const processedLines = [];
+    let prevLineEmpty = false;
+    let inCodeBlock = false;
+
+    for (const line of lines) {
+      // Track code blocks
+      if (line.trim().startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+      }
+
+      // Skip processing inside code blocks
+      if (inCodeBlock) {
+        processedLines.push(line);
+        prevLineEmpty = false;
+        continue;
+      }
+
+      const isEmpty = line.trim() === '';
+
+      // Don't allow more than one consecutive empty line
+      if (isEmpty && prevLineEmpty) {
+        continue;
+      }
+
+      // Add blank line before headings (if not at start)
+      if (/^#{1,6}\s/.test(line) && processedLines.length > 0 && !prevLineEmpty) {
+        processedLines.push('');
+      }
+
+      // Add blank line after headings
+      if (processedLines.length > 0) {
+        const prevLine = processedLines[processedLines.length - 1];
+        if (/^#{1,6}\s/.test(prevLine) && !isEmpty && line.trim() !== '') {
+          processedLines.push('');
+        }
+      }
+
+      processedLines.push(line);
+      prevLineEmpty = isEmpty;
+    }
+
+    lines = processedLines;
+  }
+
+  // Wrap long lines
+  if (wrapLines) {
+    const wrappedLines = [];
+    let inCodeBlock = false;
+
+    for (const line of lines) {
+      // Track code blocks - don't wrap inside them
+      if (line.trim().startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+        wrappedLines.push(line);
+        continue;
+      }
+
+      if (inCodeBlock) {
+        wrappedLines.push(line);
+        continue;
+      }
+
+      // Don't wrap headings, lists, blockquotes, or short lines
+      if (/^#{1,6}\s/.test(line) || /^\s*[\*\+\-]\s/.test(line) || 
+          /^\s*\d+\.\s/.test(line) || /^>\s/.test(line) ||
+          line.length <= wrapWidth) {
+        wrappedLines.push(line);
+        continue;
+      }
+
+      // Wrap long paragraph lines
+      const words = line.split(' ');
+      let currentLine = '';
+
+      for (const word of words) {
+        if (currentLine.length + word.length + 1 <= wrapWidth) {
+          currentLine += (currentLine ? ' ' : '') + word;
+        } else {
+          if (currentLine) {
+            wrappedLines.push(currentLine);
+          }
+          currentLine = word;
+        }
+      }
+      if (currentLine) {
+        wrappedLines.push(currentLine);
+      }
+    }
+
+    lines = wrappedLines;
+  }
+
+  // Filter out empty lines that were marked for removal (from Setext heading conversion)
+  lines = lines.filter((line, index) => {
+    // Keep the line unless it was marked as empty during Setext conversion
+    return true;
+  });
+
+  // Update the content
+  const beautifiedContent = lines.join('\n');
+  
+  // Update editor
+  const editor = document.getElementById('editor');
+  if (editor) {
+    editor.value = beautifiedContent;
+    tab.content = beautifiedContent;
+    tab.modified = true;
+    updateTabUI(tab);
+    updatePreview();
+    saveTabState();
+  }
+
+  closeDialog('beautify-dialog');
+}
+
 // Hints Panel Management
 function toggleHints() {
   state.hintsVisible = !state.hintsVisible;
@@ -2108,6 +2299,8 @@ function initEventListeners() {
   document.getElementById('btn-outline').addEventListener('click', toggleOutline);
   document.getElementById('btn-close-outline').addEventListener('click', toggleOutline);
   document.getElementById('btn-close-history').addEventListener('click', toggleHistory);
+  document.getElementById('btn-beautify').addEventListener('click', openBeautifyDialog);
+  document.getElementById('beautify-apply').addEventListener('click', beautifyMarkdown);
   document.getElementById('btn-theme').addEventListener('click', cycleTheme);
   document.getElementById('btn-hints').addEventListener('click', toggleHints);
   document.getElementById('btn-close-hints').addEventListener('click', closeHints);

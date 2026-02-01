@@ -79,6 +79,13 @@
           </svg>
           <span>Outline</span>
         </button>
+        <button id="btn-beautify" class="toolbar-btn" title="Beautify Markdown">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+            <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
+          </svg>
+          <span>Beautify</span>
+        </button>
       </div>
       <div class="toolbar-center">
         <div class="view-mode-toggle">
@@ -492,6 +499,79 @@
         <div class="modal-footer">
           <button class="btn-secondary" data-close>Cancel</button>
           <button id="html-export-btn" class="btn-primary">Export HTML</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beautifier Dialog -->
+    <div id="beautify-dialog" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Beautify Markdown</h3>
+          <button class="modal-close" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">Clean up and format your markdown with these options:</p>
+          
+          <div class="beautify-options">
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="beautify-headings" checked>
+                <span>Normalize headings (ATX style with #)</span>
+              </label>
+            </div>
+            
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="beautify-lists" checked>
+                <span>Normalize list markers</span>
+              </label>
+              <div class="sub-option">
+                <label for="beautify-list-marker">List marker:</label>
+                <select id="beautify-list-marker">
+                  <option value="-" selected>Dash (-)</option>
+                  <option value="*">Asterisk (*)</option>
+                  <option value="+">Plus (+)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="beautify-spacing" checked>
+                <span>Fix spacing (consistent blank lines)</span>
+              </label>
+            </div>
+            
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="beautify-indent" checked>
+                <span>Indent nested lists properly</span>
+              </label>
+            </div>
+            
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="beautify-wrap">
+                <span>Wrap long lines</span>
+              </label>
+              <div class="sub-option">
+                <label for="beautify-wrap-width">Wrap at column:</label>
+                <input type="number" id="beautify-wrap-width" value="80" min="40" max="200">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="beautify-trailing" checked>
+                <span>Remove trailing spaces</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" data-close>Cancel</button>
+          <button id="beautify-apply" class="btn-primary">Beautify</button>
         </div>
       </div>
     </div>
