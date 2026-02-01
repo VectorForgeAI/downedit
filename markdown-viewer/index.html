@@ -128,6 +128,13 @@
           </svg>
           <span id="theme-label">System</span>
         </button>
+        <button id="btn-about" class="toolbar-btn" title="About down.edit">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+          </svg>
+          <span>About</span>
+        </button>
       </div>
     </header>
 
@@ -621,6 +628,59 @@
         <div class="modal-footer">
           <button class="btn-secondary" data-close>Cancel</button>
           <button id="beautify-apply" class="btn-primary">Beautify</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- About Dialog -->
+    <div id="about-dialog" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>About down.edit</h3>
+          <button class="modal-close" data-close>&times;</button>
+        </div>
+        <div class="modal-body about-content">
+          <div class="about-logo">
+            <img src="/src/assets/logo.png" alt="down.edit" onerror="this.style.display='none'">
+          </div>
+          <div class="about-info">
+            <h2>down.edit</h2>
+            <p class="about-version">Version <span id="app-version">0.2.1</span></p>
+            <p class="about-tagline">A privacy-first Markdown editor</p>
+          </div>
+          <div class="about-details">
+            <p>Write freely. Own everything.</p>
+            <p>No cloud. No account. No telemetry.</p>
+          </div>
+          <div class="about-links">
+            <a href="https://github.com/VectorForgeAI/downedit" target="_blank" class="about-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+              </svg>
+              GitHub Repository
+            </a>
+            <a href="https://github.com/VectorForgeAI/downedit/blob/main/USER_GUIDE.md" target="_blank" class="about-link">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z"/>
+              </svg>
+              User Guide
+            </a>
+            <a href="https://github.com/VectorForgeAI/downedit/issues" target="_blank" class="about-link">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+              </svg>
+              Report an Issue
+            </a>
+          </div>
+          <div class="about-license">
+            <p><strong>License:</strong> MIT License</p>
+            <p class="about-copyright">Copyright 2026 VectorForge AI</p>
+          </div>
+          <p class="about-footer">Made out of necessity by the VectorForge AI team.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" data-close>Close</button>
         </div>
       </div>
     </div>

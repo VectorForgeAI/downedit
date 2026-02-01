@@ -463,6 +463,98 @@ body {
   border-top: 1px solid var(--border);
 }
 
+/* About Dialog */
+.about-content {
+  text-align: center;
+  padding: 20px;
+}
+
+.about-logo img {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 16px;
+}
+
+.about-info h2 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.about-version {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 0 0 4px 0;
+}
+
+.about-tagline {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 16px 0;
+}
+
+.about-details {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.about-details p {
+  margin: 4px 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.about-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.about-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 14px;
+  transition: background 0.15s;
+}
+
+.about-link:hover {
+  background: var(--bg-tertiary);
+}
+
+.about-license {
+  margin: 16px 0 8px 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.about-license p {
+  margin: 4px 0;
+}
+
+.about-copyright {
+  color: var(--text-muted);
+}
+
+.about-footer {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 /* Beautifier Dialog */
 .modal-description {
   color: var(--text-secondary);

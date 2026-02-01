@@ -724,6 +724,11 @@ function closeHints() {
   document.getElementById('hints-panel').classList.add('hidden');
 }
 
+// About Dialog
+function showAboutDialog() {
+  document.getElementById('about-dialog').classList.remove('hidden');
+}
+
 // Tab Management
 function createTab(filePath, fileName, content, isNew = false) {
   const id = generateId();
@@ -2775,6 +2780,7 @@ function initEventListeners() {
   document.getElementById('btn-theme').addEventListener('click', cycleTheme);
   document.getElementById('btn-hints').addEventListener('click', toggleHints);
   document.getElementById('btn-close-hints').addEventListener('click', closeHints);
+  document.getElementById('btn-about').addEventListener('click', showAboutDialog);
 
   // Welcome buttons
   document.getElementById('btn-new-welcome').addEventListener('click', newFile);
