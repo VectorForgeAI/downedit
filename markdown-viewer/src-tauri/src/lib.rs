@@ -2,6 +2,7 @@ use std::fs;
 use std::path::Path;
 use std::sync::mpsc;
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+use base64::{Engine as _, engine::general_purpose};
 
 // Read a file and return its content
 #[tauri::command]
@@ -109,6 +110,49 @@ async fn confirm_dialog(app: tauri::AppHandle, title: &str, message: &str) -> Re
         .map_err(|e| format!("Failed to receive dialog result: {}", e))
 }
 
+// Open image file dialog
+#[tauri::command]
+async fn open_image_dialog(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let (tx, rx) = mpsc::channel();
+
+    app.dialog()
+        .file()
+        .add_filter("Images", &["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"])
+        .pick_file(move |file_path| {
+            let path = file_path.map(|p| p.to_string());
+            let _ = tx.send(path);
+        });
+
+    rx.recv()
+        .map_err(|e| format!("Failed to receive dialog result: {}", e))
+}
+
+// Read image file and return as base64 data URI
+#[tauri::command]
+fn read_image_as_base64(path: &str) -> Result<String, String> {
+    let data = fs::read(path).map_err(|e| e.to_string())?;
+    
+    // Determine MIME type from extension
+    let extension = Path::new(path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("png")
+        .to_lowercase();
+    
+    let mime_type = match extension.as_str() {
+        "jpg" | "jpeg" => "image/jpeg",
+        "png" => "image/png",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        "bmp" => "image/bmp",
+        _ => "image/png",
+    };
+    
+    let base64_data = general_purpose::STANDARD.encode(&data);
+    Ok(format!("data:{};base64,{}", mime_type, base64_data))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -122,7 +166,9 @@ pub fn run() {
             get_file_name,
             open_file_dialog,
             save_file_dialog,
-            confirm_dialog
+            confirm_dialog,
+            open_image_dialog,
+            read_image_as_base64
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

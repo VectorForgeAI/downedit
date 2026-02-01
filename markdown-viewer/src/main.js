@@ -938,25 +938,82 @@ function insertLink() {
 }
 
 // Image dialog
+let imageSourceMode = 'url';
+let selectedImageData = null;
+
 function openImageDialog() {
   const sel = getEditorSelection();
   if (sel.text) {
     document.getElementById('image-alt').value = sel.text;
   }
+  // Reset to URL tab
+  switchImageTab('url');
+  selectedImageData = null;
+  document.getElementById('image-file-path').value = '';
+  document.getElementById('image-preview').classList.add('hidden');
   openDialog('image-dialog');
+}
+
+function switchImageTab(tab) {
+  imageSourceMode = tab;
+  
+  // Update tab buttons
+  document.getElementById('image-tab-url').classList.toggle('active', tab === 'url');
+  document.getElementById('image-tab-file').classList.toggle('active', tab === 'file');
+  
+  // Show/hide panels
+  document.getElementById('image-source-url').classList.toggle('hidden', tab !== 'url');
+  document.getElementById('image-source-file').classList.toggle('hidden', tab !== 'file');
+}
+
+async function browseForImage() {
+  try {
+    const filePath = await invoke('open_image_dialog');
+    if (filePath) {
+      document.getElementById('image-file-path').value = filePath;
+      
+      // Read the file and convert to base64
+      const imageData = await invoke('read_image_as_base64', { path: filePath });
+      selectedImageData = imageData;
+      
+      // Show preview
+      const previewImg = document.getElementById('image-preview-img');
+      previewImg.src = imageData;
+      document.getElementById('image-preview').classList.remove('hidden');
+      
+      // Set alt text from filename if empty
+      const altInput = document.getElementById('image-alt');
+      if (!altInput.value) {
+        const fileName = filePath.split(/[/\\]/).pop().replace(/\.[^.]+$/, '');
+        altInput.value = fileName;
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load image:', err);
+  }
 }
 
 function insertImage() {
   const alt = document.getElementById('image-alt').value || 'image';
-  const url = document.getElementById('image-url').value;
   const title = document.getElementById('image-title').value;
+  let imageUrl = '';
 
-  if (!url) {
-    document.getElementById('image-url').focus();
-    return;
+  if (imageSourceMode === 'url') {
+    imageUrl = document.getElementById('image-url').value;
+    if (!imageUrl) {
+      document.getElementById('image-url').focus();
+      return;
+    }
+  } else {
+    // File mode - use base64 data
+    if (!selectedImageData) {
+      document.getElementById('image-browse-btn').focus();
+      return;
+    }
+    imageUrl = selectedImageData;
   }
 
-  let markdown = `![${alt}](${url}`;
+  let markdown = `![${alt}](${imageUrl}`;
   if (title) {
     markdown += ` "${title}"`;
   }
@@ -964,6 +1021,9 @@ function insertImage() {
 
   insertAtCursor(markdown);
   closeDialog('image-dialog');
+  
+  // Reset state
+  selectedImageData = null;
 }
 
 // Table dialog
@@ -2177,6 +2237,9 @@ function initDialogs() {
       insertImage();
     }
   });
+  document.getElementById('image-tab-url').addEventListener('click', () => switchImageTab('url'));
+  document.getElementById('image-tab-file').addEventListener('click', () => switchImageTab('file'));
+  document.getElementById('image-browse-btn').addEventListener('click', browseForImage);
 
   // Table dialog
   document.getElementById('table-insert').addEventListener('click', insertTable);
