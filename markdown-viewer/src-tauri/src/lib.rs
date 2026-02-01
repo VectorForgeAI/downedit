@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 use std::sync::mpsc;
-use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 
 // Read a file and return its content
 #[tauri::command]
@@ -78,8 +78,7 @@ async fn confirm_dialog(app: tauri::AppHandle, title: &str, message: &str) -> Re
     app.dialog()
         .message(message)
         .title(title)
-        .ok_button_label("Save")
-        .cancel_button_label("Don't Save")
+        .buttons(MessageDialogButtons::OkCancelCustom("Save".into(), "Don't Save".into()))
         .show(move |result| {
             let _ = tx.send(result);
         });

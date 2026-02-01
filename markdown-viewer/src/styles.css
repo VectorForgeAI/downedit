@@ -91,6 +91,7 @@ body {
   flex-shrink: 0;
   user-select: none;
   -webkit-app-region: drag;
+  gap: 8px;
 }
 
 .toolbar-left, .toolbar-center, .toolbar-right {
@@ -98,12 +99,21 @@ body {
   align-items: center;
   gap: 4px;
   -webkit-app-region: no-drag;
+  flex-shrink: 0;
+}
+
+.toolbar-left {
+  flex: 1;
+  justify-content: flex-start;
 }
 
 .toolbar-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  flex: 0 0 auto;
+}
+
+.toolbar-right {
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .toolbar-btn {
