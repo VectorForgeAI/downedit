@@ -1,21 +1,50 @@
-# down.edit - User Guide
+# down.edit User Guide
 
-## Welcome
-
-down.edit is a lightweight Windows application for viewing, editing, and exporting Markdown files. It supports GitHub Flavored Markdown (GFM) with full syntax highlighting and exports to PDF, Microsoft Word (.docx), and HTML formats.
+Welcome to **down.edit**, a modern Markdown editor for Windows. This guide covers everything you need to know to get the most out of the application.
 
 ---
 
 ## Table of Contents
 
 1. [Getting Started](#getting-started)
-2. [Viewing Markdown](#viewing-markdown)
-3. [Editing Markdown](#editing-markdown)
-4. [Formatting Toolbar](#formatting-toolbar)
-5. [Exporting Documents](#exporting-documents)
-6. [Beautify & Utilities](#beautify--utilities)
-7. [Keyboard Shortcuts](#keyboard-shortcuts)
-8. [Troubleshooting](#troubleshooting)
+   - [Installation](#installation)
+   - [System Requirements](#system-requirements)
+   - [First Launch](#first-launch)
+2. [Interface Overview](#interface-overview)
+   - [Toolbar](#toolbar)
+   - [Tabs](#tabs)
+   - [Editor & Preview](#editor--preview)
+   - [Status Bar](#status-bar)
+3. [Working with Files](#working-with-files)
+   - [Creating New Files](#creating-new-files)
+   - [Opening Files](#opening-files)
+   - [Saving Files](#saving-files)
+   - [Closing Files](#closing-files)
+4. [Editing Markdown](#editing-markdown)
+   - [View Modes](#view-modes)
+   - [Formatting Toolbar](#formatting-toolbar)
+   - [Using the Editor](#using-the-editor)
+5. [Markdown Reference](#markdown-reference)
+   - [Basic Formatting](#basic-formatting)
+   - [Headings](#headings)
+   - [Lists](#lists)
+   - [Links & Images](#links--images)
+   - [Code](#code)
+   - [Tables](#tables)
+   - [Other Elements](#other-elements)
+6. [Navigation & Organization](#navigation--organization)
+   - [Document Outline](#document-outline)
+   - [Document History](#document-history)
+   - [Markdown Hints](#markdown-hints)
+7. [Exporting Documents](#exporting-documents)
+   - [Export to PDF](#export-to-pdf)
+   - [Export to Word](#export-to-word-docx)
+   - [Export to HTML](#export-to-html)
+8. [Customization](#customization)
+   - [Themes](#themes)
+   - [Resizing Panes](#resizing-panes)
+9. [Keyboard Shortcuts](#keyboard-shortcuts)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -23,350 +52,419 @@ down.edit is a lightweight Windows application for viewing, editing, and exporti
 
 ### Installation
 
-1. Download `down.edit_Setup.msi` from the releases page
-2. Run the installer and follow the prompts
+1. Download the latest installer from the releases page:
+   - `down.edit_1.0.0_x64-setup.exe` (recommended)
+   - `down.edit_1.0.0_x64.msi` (alternative)
+2. Run the installer and follow the on-screen instructions
 3. Launch down.edit from the Start menu or desktop shortcut
 
 ### System Requirements
 
-- Windows 10 or later (64-bit)
-- 100 MB disk space
-- WebView2 Runtime (installed automatically if needed)
+| Requirement | Minimum |
+|-------------|---------|
+| Operating System | Windows 10 version 1803 or later (64-bit) |
+| Memory | 100 MB RAM |
+| Disk Space | 50 MB |
+| Runtime | WebView2 (installed automatically if needed) |
+
+### First Launch
+
+When you first open down.edit, you'll see the welcome screen with options to:
+
+- **Create New File** - Start a new Markdown document
+- **Open File** - Browse for an existing Markdown file
+- **Drag & Drop** - Drop any `.md`, `.markdown`, or `.txt` file onto the window
 
 ---
 
-## Viewing Markdown
+## Interface Overview
+
+### Toolbar
+
+The main toolbar contains essential controls:
+
+| Button | Description |
+|--------|-------------|
+| **Open** | Open an existing file |
+| **Outline** | Toggle the document outline panel |
+| **History** | Toggle the document history panel |
+| **Beautify** | Clean up Markdown formatting |
+| **Hints** | Show Markdown syntax reference |
+| **Export** | Export to PDF, Word, or HTML |
+| **Edit / Split / Preview** | Switch view modes |
+| **Theme** | Cycle through Light, Dark, and System themes |
+
+### Tabs
+
+Each open document appears as a tab at the top of the window:
+
+- **Click a tab** to switch to that document
+- **Click the × button** to close a tab
+- **Asterisk (*)** after the filename indicates unsaved changes
+- Use `Ctrl+Tab` and `Ctrl+Shift+Tab` to navigate between tabs
+
+### Editor & Preview
+
+In **Split** mode, the window is divided into two panes:
+
+- **Left pane (Editor)**: Where you write Markdown
+  - Line numbers on the left side
+  - Monospace font for easy editing
+  
+- **Right pane (Preview)**: Rendered Markdown output
+  - Updates in real-time as you type
+  - Full GFM styling with syntax highlighting
+
+Drag the divider between panes to adjust their sizes.
+
+### Status Bar
+
+The status bar at the bottom shows:
+
+- **Auto-save indicator**: Green dot when saved, amber when saving
+- **Cursor position**: Current line and column number
+- **Word count**: Total words in the document
+- **Character count**: Total characters in the document
+
+---
+
+## Working with Files
+
+### Creating New Files
+
+To create a new Markdown file:
+
+1. Press `Ctrl+N` or click **File → New**
+2. A new tab opens with the name "Untitled-1.md"
+3. Start typing your content
+4. Save with `Ctrl+S` when ready
 
 ### Opening Files
 
-There are three ways to open a markdown file:
+There are several ways to open files:
 
-#### Using the Toolbar
-1. Click the **Open** button (or press `Ctrl+O`)
-2. Browse to your markdown file (.md, .markdown, or .txt)
-3. Click **Open**
+#### Using the Open Dialog
+1. Press `Ctrl+O` or click the **Open** button
+2. Navigate to your file in the dialog
+3. Select one or more files and click **Open**
 
 #### Drag and Drop
-1. Locate your markdown file in File Explorer
+1. Locate your file in File Explorer
 2. Drag the file onto the down.edit window
-3. The file will open in a new tab
+3. The file opens in a new tab
 
-#### Double-Click (After File Association)
-1. Right-click any .md file in File Explorer
-2. Select **Open with** → **Choose another app**
-3. Select down.edit and check "Always use this app"
-4. Now you can double-click any .md file to open it
+#### Supported File Types
+- `.md` - Markdown files
+- `.markdown` - Markdown files (alternate extension)
+- `.txt` - Plain text files
 
-### Tabbed Interface
+### Saving Files
 
-down.edit supports multiple open files using tabs:
+#### Save (Ctrl+S)
+- Saves the current file to its existing location
+- If the file is new/untitled, opens the Save As dialog
 
-- **Open new tab:** Open additional files using any method above
-- **Switch tabs:** Click on a tab or use `Ctrl+Tab` / `Ctrl+Shift+Tab`
-- **Close tab:** Click the × on the tab or use `Ctrl+W`
-- **Unsaved indicator:** Tabs with unsaved changes show a dot
+#### Save As (Ctrl+Shift+S)
+- Saves the file to a new location
+- Allows you to change the filename
 
-### View Modes
+#### Auto-Save
+down.edit automatically saves your work to local storage:
+- Saves after 1 second of inactivity
+- Restores your session when you reopen the app
+- Auto-save data persists for 24 hours
 
-down.edit offers three viewing modes:
+### Closing Files
 
-| Mode | Description | Shortcut |
-|------|-------------|----------|
-| **Edit** | Full-width text editor only | `Ctrl+1` |
-| **Split** | Side-by-side editor and preview | `Ctrl+2` |
-| **Preview** | Read-only rendered preview only | `Ctrl+3` |
+- **Single file**: Click the × on the tab or press `Ctrl+W`
+- **All files**: Close the application window
 
-Toggle modes using the toolbar buttons or keyboard shortcuts.
-
-### Theme Selection
-
-down.edit supports three theme modes:
-
-| Theme | Description |
-|-------|-------------|
-| **System** | Automatically matches your Windows theme setting |
-| **Light** | White background with dark text |
-| **Dark** | Dark background with light text |
-
-To change the theme, click the theme toggle button in the toolbar. It cycles through System → Light → Dark.
-
-### Document Outline
-
-The outline panel shows all headings in your document:
-
-1. Click the **Outline** button in the toolbar (or press `Ctrl+Shift+O`)
-2. The outline appears on the left side
-3. Click any heading to jump to that section
-4. Click the × or press `Ctrl+Shift+O` again to close
-
-### Supported Markdown Features
-
-down.edit supports full GitHub Flavored Markdown:
-
-| Feature | Syntax Example |
-|---------|----------------|
-| **Bold** | `**text**` or `__text__` |
-| *Italic* | `*text*` or `_text_` |
-| ***Bold & Italic*** | `***text***` |
-| ~~Strikethrough~~ | `~~text~~` |
-| `Code` | `` `code` `` |
-| Links | `[text](url)` |
-| Images | `![alt](url)` |
-| Headers | `# H1` through `###### H6` |
-| Bullet Lists | `- item` or `* item` |
-| Numbered Lists | `1. item` |
-| Task Lists | `- [ ] task` or `- [x] done` |
-| Tables | See table syntax below |
-| Blockquotes | `> quote` |
-| Code Blocks | ` ``` language ` |
-| Horizontal Rule | `---` or `***` |
-
-#### Code Block Syntax Highlighting
-
-Code blocks support 20+ programming languages including:
-JavaScript, TypeScript, Python, Rust, Go, Java, C#, C++, C, PHP, Ruby, Swift, Kotlin, SQL, Bash, PowerShell, HTML, CSS, JSON, YAML, XML, Markdown, Dockerfile
-
-Each code block includes:
-- Language label in the header
-- Copy button (click to copy code)
-- Syntax highlighting
+If you have unsaved changes, you'll be prompted to save before closing.
 
 ---
 
 ## Editing Markdown
 
-### Creating a New File
+### View Modes
 
-1. Click the **New** button in the toolbar (or press `Ctrl+N`)
-2. A new untitled tab opens with the editor ready
-3. Start typing your markdown content
+Switch between modes using the toolbar buttons or keyboard shortcuts:
 
-### Editing an Existing File
+| Mode | Description | Shortcut |
+|------|-------------|----------|
+| **Edit** | Full-width editor only | `Ctrl+1` |
+| **Split** | Side-by-side editor and preview | `Ctrl+2` |
+| **Preview** | Full-width preview only | `Ctrl+3` |
 
-1. Open the file you want to edit
-2. The editor appears on the left in Split mode
-3. Make your changes - preview updates in real-time
-4. Save with `Ctrl+S`
+### Formatting Toolbar
 
-### Editor Features
+The formatting toolbar appears below the main toolbar when a document is open:
 
-#### Line Numbers
-The editor displays line numbers on the left side that scroll with your content.
+| Button | Action | Shortcut |
+|--------|--------|----------|
+| **B** | Bold text | `Ctrl+B` |
+| **I** | Italic text | `Ctrl+I` |
+| **S** | Strikethrough | - |
+| **`** | Inline code | - |
+| **H▾** | Heading (dropdown for H1-H6) | - |
+| **•** | Bullet list | `Ctrl+L` |
+| **1.** | Numbered list | `Ctrl+Shift+L` |
+| **☐** | Task list | - |
+| **"** | Blockquote | `Ctrl+Q` |
+| **—** | Horizontal rule | - |
+| **🔗** | Insert link | `Ctrl+K` |
+| **🖼** | Insert image | `Ctrl+Shift+I` |
+| **📊** | Insert table | - |
+| **</>** | Insert code block | `Ctrl+Shift+C` |
 
-#### Cursor Position
-The status bar shows your current line and column position (e.g., "Ln 5, Col 12").
+### Using the Editor
 
-#### Tab Key
-Pressing Tab inserts 2 spaces for consistent indentation.
+#### Selecting Text
+- Click and drag to select text
+- Double-click to select a word
+- Triple-click to select a line
+- `Ctrl+A` to select all
 
-### Saving Files
+#### Formatting Selected Text
+1. Select the text you want to format
+2. Click a formatting button or use a shortcut
+3. The Markdown syntax wraps your selection
 
-#### Save (Ctrl+S)
-Saves changes to the current file. If the file is new (untitled), you'll be prompted to choose a location.
+For example, selecting "hello" and pressing `Ctrl+B` produces `**hello**`.
 
-#### Save As (Ctrl+Shift+S)
-Saves the current file to a new location with a new name.
-
-### Auto-Save
-
-down.edit automatically saves your work to local storage:
-- Auto-save triggers after 1 second of inactivity
-- The status bar shows "Saving..." then "Auto-saved"
-- Your work is restored if the app closes unexpectedly
-- Auto-saved content expires after 24 hours
-
-### Document History
-
-down.edit keeps a history of your document versions:
-
-1. Click the **History** button in the toolbar (or press `Ctrl+H`)
-2. The history panel appears on the right
-3. Click any version to restore it
-4. History shows timestamps and content previews
-
-Features:
-- Stores up to 20 versions per document
-- Versions saved automatically as you edit
-- Click any version to restore that content
-- History persists across sessions
-
-### Unsaved Changes
-
-- Tabs with unsaved changes show a dot indicator
-- When closing a tab with unsaved changes, you'll be prompted to save
-- The confirmation dialog asks if you want to save before closing
+#### Inserting at Cursor
+If no text is selected:
+- Formatting buttons insert syntax at the cursor position
+- Link/image/table dialogs open for input
 
 ---
 
-## Formatting Toolbar
+## Markdown Reference
 
-The formatting toolbar appears below the tabs when editing a document. It provides quick access to common markdown formatting.
+### Basic Formatting
 
-### Text Formatting
-
-| Button | Action | Shortcut |
-|--------|--------|----------|
-| **B** | Bold | `Ctrl+B` |
-| *I* | Italic | `Ctrl+I` |
-| ~~S~~ | Strikethrough | `Ctrl+Shift+S` |
-| `</>` | Inline Code | - |
+| Format | Markdown | Result |
+|--------|----------|--------|
+| Bold | `**text**` | **text** |
+| Italic | `*text*` | *text* |
+| Bold & Italic | `***text***` | ***text*** |
+| Strikethrough | `~~text~~` | ~~text~~ |
+| Inline Code | `` `code` `` | `code` |
 
 ### Headings
 
-Click the **H** dropdown button to select heading levels 1-6. The selected heading style is applied to the current line.
+```markdown
+# Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4
+##### Heading 5
+###### Heading 6
+```
 
 ### Lists
 
-| Button | Action | Shortcut |
-|--------|--------|----------|
-| • | Bullet List | `Ctrl+L` |
-| 1. | Numbered List | `Ctrl+Shift+L` |
-| ☐ | Task List | - |
+#### Bullet Lists
+```markdown
+- Item one
+- Item two
+  - Nested item
+  - Another nested item
+- Item three
+```
 
-### Block Elements
+#### Numbered Lists
+```markdown
+1. First item
+2. Second item
+3. Third item
+```
 
-| Button | Action | Shortcut |
-|--------|--------|----------|
-| " | Blockquote | `Ctrl+Q` |
-| — | Horizontal Rule | - |
+#### Task Lists
+```markdown
+- [ ] Incomplete task
+- [x] Completed task
+- [ ] Another task
+```
 
-### Insert Elements
+### Links & Images
 
-#### Link Dialog (Ctrl+K)
-1. Click the link button or press `Ctrl+K`
-2. Enter the link text (pre-filled if text is selected)
-3. Enter the URL
-4. Optionally add a title
-5. Click **Insert**
+#### Links
+```markdown
+[Link text](https://example.com)
+[Link with title](https://example.com "Title")
+```
 
-#### Image Dialog (Ctrl+Shift+I)
-Two methods to insert images:
+#### Images
+```markdown
+![Alt text](image-url.jpg)
+![Alt text](image-url.jpg "Image title")
+```
 
-**From URL:**
-1. Click the image button or press `Ctrl+Shift+I`
-2. Select the "From URL" tab
-3. Enter the image URL
-4. Add alt text and optional title
-5. Click **Insert**
+### Code
 
-**From File:**
-1. Click the image button
-2. Select the "From File" tab
-3. Click **Browse...** to select a local image
-4. The image preview appears
-5. Alt text is auto-filled from filename
-6. Click **Insert** (image is embedded as base64)
+#### Inline Code
+```markdown
+Use the `print()` function.
+```
 
-#### Table Generator
-1. Click the table button
-2. A visual table editor appears with a 3×3 default table
-3. Edit cells directly - first row is the header
-4. Use **Add Row** / **Add Column** to expand
-5. Use **Remove Row** / **Remove Column** to shrink
-6. Set column alignment (Left/Center/Right) for each column
-7. Preview the markdown output in real-time
-8. Use Tab to move between cells, Arrow keys to navigate
-9. Click **Insert Table** when done
+#### Code Blocks
+````markdown
+```python
+def hello():
+    print("Hello, World!")
+```
+````
 
-#### Code Block Dialog (Ctrl+Shift+C)
-1. Click the code block button or press `Ctrl+Shift+C`
-2. Select a programming language from the dropdown
-3. Click **Insert**
-4. Cursor is placed inside the code block for immediate typing
+Supported languages include: javascript, typescript, python, rust, c, cpp, java, csharp, go, php, ruby, swift, kotlin, sql, bash, powershell, json, yaml, html, css, and many more.
+
+### Tables
+
+```markdown
+| Header 1 | Header 2 | Header 3 |
+|----------|:--------:|---------:|
+| Left     | Center   | Right    |
+| aligned  | aligned  | aligned  |
+```
+
+Column alignment:
+- `:---` - Left aligned (default)
+- `:---:` - Center aligned
+- `---:` - Right aligned
+
+### Other Elements
+
+#### Blockquotes
+```markdown
+> This is a blockquote.
+> It can span multiple lines.
+>
+> > Nested blockquote
+```
+
+#### Horizontal Rules
+```markdown
+---
+```
+
+---
+
+## Navigation & Organization
+
+### Document Outline
+
+The outline panel shows all headings in your document for quick navigation:
+
+1. Click **Outline** in the toolbar or press `Ctrl+Shift+O`
+2. The panel appears on the left side
+3. Click any heading to jump to that section
+4. Headings are indented based on their level
+
+### Document History
+
+down.edit automatically saves versions of your document as you work:
+
+1. Click **History** in the toolbar or press `Ctrl+H`
+2. The panel appears on the right side
+3. Each entry shows the time and a preview
+4. Click an entry to restore that version
+
+History features:
+- Saves automatically every 30 seconds of inactivity
+- Stores up to 20 versions per document
+- Versions are stored in local browser storage
+
+### Markdown Hints
+
+Need a quick syntax reminder? Use the hints panel:
+
+1. Click the **?** (Hints) button in the toolbar
+2. A floating panel shows common Markdown syntax
+3. Click the × to close it
 
 ---
 
 ## Exporting Documents
 
-Click the **Export** dropdown in the toolbar to access export options.
-
 ### Export to PDF
 
-1. Click **Export** → **Export to PDF**
+Create professional PDF documents from your Markdown:
+
+1. Click **Export** → **PDF**
 2. Configure export options:
-   - **Theme:** Professional, Academic, or Minimal color schemes
-   - **Page Size:** Letter, Legal, Tabloid, or A4
-   - **Margin:** 0.25 to 2 inches
-   - **Font Size:** 8 to 16 pt
-   - **Line Height:** 1.0 to 3.0
+
+| Option | Description |
+|--------|-------------|
+| **Theme** | Professional, Academic, or Minimal styling |
+| **Page Size** | Letter, Legal, Tabloid, or A4 |
+| **Margins** | Page margins in inches |
+| **Font Size** | Base font size in points |
+| **Line Height** | Spacing between lines |
+
 3. Click **Export PDF**
-4. Choose save location
+4. Choose a save location
 
-**PDF Themes:**
-| Theme | Description |
-|-------|-------------|
-| Professional | Clean design with blue accent headings |
-| Academic | Formal style with dark gray headings |
-| Minimal | Simple black and gray styling |
+### Export to Word (DOCX)
 
-### Export to Word (.docx)
+Create Word documents that preserve your formatting:
 
-1. Click **Export** → **Export to Word**
+1. Click **Export** → **Word Document (.docx)**
 2. Configure export options:
-   - **Page Size:** Letter, Legal, or A4
-   - **Margin:** 0.25 to 2 inches
-3. Click **Export Word**
-4. Choose save location
 
-**Word Export Features:**
-- Heading levels mapped to Word heading styles
-- Bold, italic, and code formatting preserved
-- Bullet and numbered lists
-- Blockquotes with left border styling
-- Code blocks with monospace font
-- Links formatted as blue underlined text
+| Option | Description |
+|--------|-------------|
+| **Page Size** | Letter, Legal, or A4 |
+| **Margins** | Page margins in inches |
+
+3. Click **Export DOCX**
+4. Choose a save location
+
+Word export features:
+- Headings map to Word heading styles
+- Lists maintain proper formatting
+- Code blocks use monospace font
+- Inline formatting is preserved
 
 ### Export to HTML
 
-1. Click **Export** → **Export to HTML**
-2. Configure export options:
-   - **Style:** Standalone (embedded CSS), Minimal, or Raw (no styling)
-   - **Include dark mode support:** Adds CSS for automatic dark/light theme
-3. Click **Export HTML**
-4. Choose save location
+Create standalone HTML files:
 
-**HTML Export Features:**
-- Self-contained HTML file with embedded CSS
-- Responsive design for all screen sizes
-- Optional dark mode via `prefers-color-scheme`
-- All markdown features rendered properly
+1. Click **Export** → **HTML**
+2. Configure export options:
+
+| Option | Description |
+|--------|-------------|
+| **Style** | Styled (with CSS) or Raw (no styling) |
+| **Dark Mode** | Include dark mode support (auto-detects) |
+
+3. Click **Export HTML**
+4. Choose a save location
 
 ---
 
-## Beautify & Utilities
+## Customization
 
-### Markdown Beautifier
+### Themes
 
-The Beautifier cleans up and formats your markdown for consistency.
+down.edit supports three theme modes:
 
-1. Click the **Beautify** button in the toolbar
-2. Configure options:
-   - **Normalize headings:** Convert to ATX style (#)
-   - **Normalize list markers:** Standardize to -, *, or +
-   - **Fix spacing:** Ensure consistent blank lines
-   - **Indent nested lists:** Use 2-space indentation
-   - **Wrap long lines:** Wrap at specified column width
-   - **Remove trailing spaces:** Clean up line endings
-3. Click **Beautify**
+| Theme | Description |
+|-------|-------------|
+| **System** | Follows your Windows theme setting |
+| **Light** | White background with dark text |
+| **Dark** | Dark background with light text |
 
-### Formatting Hints Panel
+To change themes:
+- Click the theme button (☀/☽) in the toolbar
+- Cycles through: System → Light → Dark → System
 
-Quick reference for markdown syntax:
+### Resizing Panes
 
-1. Click the **Hints** button in the toolbar
-2. The hints panel slides in from the right
-3. Shows examples for:
-   - Text formatting (bold, italic, strikethrough, code)
-   - Headings
-   - Lists (bullet, numbered, task)
-   - Links and images
-   - Blocks (quotes, code blocks, horizontal rules)
-   - Tables
-4. Click × to close
+In Split mode, adjust the editor and preview sizes:
 
-### Fullscreen Mode
-
-Press `F11` to toggle fullscreen mode for distraction-free writing.
+1. Hover over the divider between panes
+2. The cursor changes to a resize handle
+3. Click and drag to adjust the split
+4. Release to set the new size
 
 ---
 
@@ -378,30 +476,37 @@ Press `F11` to toggle fullscreen mode for distraction-free writing.
 |----------|--------|
 | `Ctrl+N` | New file |
 | `Ctrl+O` | Open file |
-| `Ctrl+S` | Save |
-| `Ctrl+Shift+S` | Save As |
+| `Ctrl+S` | Save file |
+| `Ctrl+Shift+S` | Save file as |
 | `Ctrl+W` | Close current tab |
+
+### Navigation
+
+| Shortcut | Action |
+|----------|--------|
 | `Ctrl+Tab` | Next tab |
 | `Ctrl+Shift+Tab` | Previous tab |
+| `Ctrl+Shift+O` | Toggle outline panel |
+| `Ctrl+H` | Toggle history panel |
 
-### View & Navigation
+### View & Window
 
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+1` | Edit mode |
 | `Ctrl+2` | Split mode |
 | `Ctrl+3` | Preview mode |
-| `Ctrl+Shift+O` | Toggle outline panel |
-| `Ctrl+H` | Toggle history panel |
 | `F11` | Toggle fullscreen |
+| `Ctrl++` or `Ctrl+=` | Zoom in |
+| `Ctrl+-` | Zoom out |
+| `Ctrl+0` | Reset zoom |
 
-### Text Formatting
+### Text Formatting (Editor Focused)
 
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+B` | Bold |
 | `Ctrl+I` | Italic |
-| `Ctrl+Shift+S` | Strikethrough |
 | `Ctrl+K` | Insert link |
 | `Ctrl+Shift+I` | Insert image |
 | `Ctrl+Shift+C` | Insert code block |
@@ -409,73 +514,88 @@ Press `F11` to toggle fullscreen mode for distraction-free writing.
 | `Ctrl+L` | Bullet list |
 | `Ctrl+Shift+L` | Numbered list |
 
+### Export
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+E` | Open export menu |
+| `Ctrl+Shift+E` | Quick export (last used format) |
+
+### Editor
+
+| Shortcut | Action |
+|----------|--------|
+| `Tab` | Insert 2 spaces |
+| `Ctrl+A` | Select all |
+| `Ctrl+Z` | Undo |
+| `Ctrl+Y` | Redo |
+
 ---
 
 ## Troubleshooting
 
 ### File Won't Open
 
-**Problem:** Clicking Open does nothing or shows an error.
+**Problem:** Clicking Open shows an error or does nothing.
 
 **Solutions:**
-1. Ensure the file has a .md, .markdown, or .txt extension
-2. Check that the file isn't open in another program with exclusive lock
-3. Verify the file encoding is UTF-8
+- Ensure the file has a `.md`, `.markdown`, or `.txt` extension
+- Check that the file isn't locked by another program
+- Verify the file encoding is UTF-8
+
+### Preview Doesn't Update
+
+**Problem:** Changes in the editor don't appear in the preview.
+
+**Solutions:**
+- Ensure you're in Split or Preview mode
+- Check for syntax errors in your Markdown
+- Try switching to Edit mode and back to Split
 
 ### Markdown Doesn't Render Correctly
 
-**Problem:** Some markdown elements don't display properly.
+**Problem:** Some Markdown elements display incorrectly.
 
 **Solutions:**
-1. Check your markdown syntax against the GFM specification
-2. Ensure there are blank lines before and after block elements
-3. For tables, ensure proper pipe alignment
-4. Use the Beautify feature to clean up formatting
-
-### Theme Doesn't Match System
-
-**Problem:** System theme doesn't change when Windows theme changes.
-
-**Solutions:**
-1. Restart down.edit after changing Windows theme
-2. Manually select Light or Dark mode instead
+- Add blank lines before and after block elements (headings, code blocks, lists)
+- Ensure table columns are properly aligned with pipes
+- Check for unclosed formatting (missing closing `**` or `*`)
 
 ### Export Fails
 
-**Problem:** Export to Word, PDF, or HTML shows an error.
+**Problem:** Export shows an error.
 
 **Solutions:**
-1. Ensure you have write permission to the destination folder
-2. Close the destination file if it's open in another program
-3. Check that images referenced in the document exist
-4. Try a different export location
+- Ensure you have write permission to the destination folder
+- Close the target file if it's open in another application
+- Check that referenced images exist at their paths
 
-### Auto-Save Not Working
+### Auto-Save Data Lost
 
-**Problem:** Changes aren't being auto-saved.
-
-**Solutions:**
-1. Check the status bar for "Auto-saved" indicator
-2. Ensure the document has been modified (dirty state)
-3. Wait at least 1 second after making changes
-4. Check browser localStorage isn't full or blocked
-
-### Application Crashes
-
-**Problem:** down.edit closes unexpectedly.
+**Problem:** Previous session wasn't restored.
 
 **Solutions:**
-1. Try opening the file in a text editor to check for corruption
-2. Clear auto-save data and restart
-3. Update to the latest version
-4. Report the issue with steps to reproduce
+- Auto-save data expires after 24 hours
+- Check that browser storage isn't being cleared
+- Avoid using the app in private/incognito mode
+
+### Application Won't Start
+
+**Problem:** down.edit fails to launch.
+
+**Solutions:**
+- Ensure WebView2 runtime is installed (download from Microsoft)
+- Try running as administrator
+- Reinstall the application
 
 ---
 
 ## Getting Help
 
-- **GitHub Issues:** Report bugs and request features
-- **Documentation:** Full documentation at the project repository
+If you encounter issues not covered here:
+
+- **GitHub Issues**: Report bugs and request features on the project repository
+- **Documentation**: Check the DEVELOPMENT.md file for technical details
 
 ---
 

@@ -3,6 +3,7 @@ import { Marked } from 'marked';
 import hljs from 'highlight.js/lib/core';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
 
@@ -82,6 +83,8 @@ const state = {
   autoSaveTimer: null,
   historyTimer: null,
   newFileCounter: 1,
+  zoomLevel: 100, // percentage
+  lastExportFormat: 'pdf', // for quick export
 };
 
 // Configure marked with GFM
@@ -208,6 +211,67 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
     applyTheme();
   }
 });
+
+// Zoom Management
+function zoomIn() {
+  if (state.zoomLevel < 200) {
+    state.zoomLevel += 10;
+    applyZoom();
+  }
+}
+
+function zoomOut() {
+  if (state.zoomLevel > 50) {
+    state.zoomLevel -= 10;
+    applyZoom();
+  }
+}
+
+function resetZoom() {
+  state.zoomLevel = 100;
+  applyZoom();
+}
+
+function applyZoom() {
+  const app = document.getElementById('app');
+  app.style.fontSize = `${state.zoomLevel}%`;
+  // Update status bar or show notification
+  console.log(`Zoom: ${state.zoomLevel}%`);
+}
+
+// Fullscreen Toggle
+async function toggleFullscreen() {
+  try {
+    const window = getCurrentWindow();
+    const isFullscreen = await window.isFullscreen();
+    await window.setFullscreen(!isFullscreen);
+  } catch (err) {
+    console.error('Failed to toggle fullscreen:', err);
+    // Fallback for browsers
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+}
+
+// Quick Export (uses last format)
+async function quickExport() {
+  switch (state.lastExportFormat) {
+    case 'pdf':
+      await exportToPdf();
+      break;
+    case 'docx':
+      await exportToDocx();
+      break;
+    case 'html':
+      await exportToHtml();
+      break;
+    default:
+      openPdfDialog();
+  }
+}
 
 // View Mode Management
 function setViewMode(mode) {
@@ -1485,6 +1549,7 @@ async function exportToPdf() {
   const tab = state.tabs.find(t => t.id === state.activeTabId);
   if (!tab) return;
 
+  state.lastExportFormat = 'pdf';
   const theme = document.getElementById('pdf-theme').value;
   const pageSize = document.getElementById('pdf-pagesize').value;
   const marginInches = parseFloat(document.getElementById('pdf-margin').value) || 1;
@@ -1656,6 +1721,7 @@ async function exportToDocx() {
   const tab = state.tabs.find(t => t.id === state.activeTabId);
   if (!tab) return;
 
+  state.lastExportFormat = 'docx';
   const pageSize = document.getElementById('docx-pagesize').value;
   const marginInches = parseFloat(document.getElementById('docx-margin').value) || 1;
 
@@ -1939,6 +2005,7 @@ async function exportToHtml() {
   const tab = state.tabs.find(t => t.id === state.activeTabId);
   if (!tab) return;
 
+  state.lastExportFormat = 'html';
   const style = document.getElementById('html-style').value;
   const includeDarkMode = document.getElementById('html-darkmode').checked;
 
@@ -2289,6 +2356,12 @@ async function initDragDrop() {
 // Keyboard Shortcuts
 function initKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
+    // F11 - Toggle fullscreen
+    if (e.key === 'F11') {
+      e.preventDefault();
+      toggleFullscreen();
+    }
+
     // Ctrl+N - New file
     if (e.ctrlKey && e.key === 'n') {
       e.preventDefault();
@@ -2345,6 +2418,40 @@ function initKeyboardShortcuts() {
       toggleHistory();
     }
 
+    // Ctrl+E - Export dialog (open PDF dialog as default)
+    if (e.ctrlKey && !e.shiftKey && e.key === 'e') {
+      e.preventDefault();
+      if (state.activeTabId) {
+        toggleExportMenu();
+      }
+    }
+
+    // Ctrl+Shift+E - Quick export (last format)
+    if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+      e.preventDefault();
+      if (state.activeTabId) {
+        quickExport();
+      }
+    }
+
+    // Ctrl++ or Ctrl+= - Zoom in
+    if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
+      e.preventDefault();
+      zoomIn();
+    }
+
+    // Ctrl+- - Zoom out
+    if (e.ctrlKey && e.key === '-') {
+      e.preventDefault();
+      zoomOut();
+    }
+
+    // Ctrl+0 - Reset zoom
+    if (e.ctrlKey && e.key === '0') {
+      e.preventDefault();
+      resetZoom();
+    }
+
     // Ctrl+1 - Edit mode
     if (e.ctrlKey && e.key === '1') {
       e.preventDefault();
@@ -2376,12 +2483,6 @@ function initKeyboardShortcuts() {
       if (e.ctrlKey && !e.shiftKey && e.key === 'i') {
         e.preventDefault();
         formatItalic();
-      }
-
-      // Ctrl+Shift+S - Strikethrough (but not Ctrl+S which is save)
-      if (e.ctrlKey && e.shiftKey && e.key === 'S') {
-        e.preventDefault();
-        formatStrikethrough();
       }
 
       // Ctrl+K - Insert link
