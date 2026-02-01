@@ -74,9 +74,11 @@ const state = {
   activeTabId: null,
   theme: 'system',
   outlineVisible: false,
+  historyVisible: false,
   viewMode: 'split', // 'edit', 'split', 'preview'
   isFullscreen: false,
   autoSaveTimer: null,
+  historyTimer: null,
   newFileCounter: 1,
 };
 
@@ -364,6 +366,11 @@ function renderContent() {
   editor.value = tab.content;
   editor.scrollTop = tab.editorScrollPosition || 0;
 
+  // Update line numbers
+  updateLineNumbers();
+  syncLineNumbersScroll();
+  updateCursorPosition();
+
   // Render preview
   renderPreview();
 
@@ -456,6 +463,9 @@ function autoSave() {
 
   localStorage.setItem('mdviewer-autosave', JSON.stringify(autoSaveData));
 
+  // Also save to history on auto-save
+  saveToHistory(tab);
+
   setTimeout(() => showAutoSaveStatus(false), 500);
 }
 
@@ -523,6 +533,181 @@ function toggleOutline() {
   const panel = document.getElementById('outline-panel');
   state.outlineVisible = !state.outlineVisible;
   panel.classList.toggle('hidden', !state.outlineVisible);
+}
+
+function toggleHistory() {
+  const panel = document.getElementById('history-panel');
+  state.historyVisible = !state.historyVisible;
+  panel.classList.toggle('hidden', !state.historyVisible);
+  if (state.historyVisible) {
+    renderHistory();
+  }
+}
+
+// Line Numbers
+function updateLineNumbers() {
+  const editor = document.getElementById('editor');
+  const lineNumbers = document.getElementById('line-numbers');
+
+  const lines = editor.value.split('\n').length;
+  const numbers = [];
+  for (let i = 1; i <= lines; i++) {
+    numbers.push(i);
+  }
+  lineNumbers.innerHTML = numbers.join('<br>');
+}
+
+function syncLineNumbersScroll() {
+  const editor = document.getElementById('editor');
+  const lineNumbers = document.getElementById('line-numbers');
+  lineNumbers.scrollTop = editor.scrollTop;
+}
+
+// Cursor Position Tracking
+function updateCursorPosition() {
+  const editor = document.getElementById('editor');
+  const statusLine = document.getElementById('status-line');
+
+  const text = editor.value.substring(0, editor.selectionStart);
+  const lines = text.split('\n');
+  const lineNumber = lines.length;
+  const columnNumber = lines[lines.length - 1].length + 1;
+
+  statusLine.textContent = `Ln ${lineNumber}, Col ${columnNumber}`;
+}
+
+// Document History Management
+function getHistoryKey(tabId) {
+  return `mdviewer-history-${tabId}`;
+}
+
+function saveToHistory(tab) {
+  if (!tab || !tab.content.trim()) return;
+
+  const key = getHistoryKey(tab.id);
+  let history = [];
+
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      history = JSON.parse(saved);
+    }
+  } catch {
+    history = [];
+  }
+
+  // Don't save if content hasn't changed from the last entry
+  if (history.length > 0 && history[0].content === tab.content) {
+    return;
+  }
+
+  // Add new entry at the beginning
+  history.unshift({
+    content: tab.content,
+    timestamp: Date.now(),
+    preview: tab.content.substring(0, 100).replace(/\n/g, ' ').trim()
+  });
+
+  // Keep only last 20 versions
+  history = history.slice(0, 20);
+
+  localStorage.setItem(key, JSON.stringify(history));
+}
+
+function loadHistory(tabId) {
+  const key = getHistoryKey(tabId);
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch {
+    // Ignore errors
+  }
+  return [];
+}
+
+function restoreFromHistory(historyEntry) {
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (!tab || !historyEntry) return;
+
+  const editor = document.getElementById('editor');
+  tab.content = historyEntry.content;
+  editor.value = tab.content;
+  tab.isDirty = tab.content !== tab.originalContent;
+
+  renderTabs();
+  renderPreview();
+  updateOutline();
+  updateStatusBar();
+  updateLineNumbers();
+
+  // Close history panel
+  toggleHistory();
+}
+
+function renderHistory() {
+  const historyContent = document.getElementById('history-content');
+
+  if (!state.activeTabId) {
+    historyContent.innerHTML = '<p class="history-empty">No document selected</p>';
+    return;
+  }
+
+  const history = loadHistory(state.activeTabId);
+
+  if (history.length === 0) {
+    historyContent.innerHTML = '<p class="history-empty">No history available yet.<br>History is saved automatically as you edit.</p>';
+    return;
+  }
+
+  historyContent.innerHTML = history.map((entry, index) => {
+    const date = new Date(entry.timestamp);
+    const timeStr = formatHistoryTime(date);
+    const preview = entry.preview || '(empty)';
+
+    return `
+      <div class="history-item" data-index="${index}">
+        <span class="history-item-time">${timeStr}</span>
+        <span class="history-item-preview">${escapeHtml(preview)}</span>
+      </div>
+    `;
+  }).join('');
+
+  historyContent.querySelectorAll('.history-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const index = parseInt(item.dataset.index);
+      const history = loadHistory(state.activeTabId);
+      if (history[index]) {
+        restoreFromHistory(history[index]);
+      }
+    });
+  });
+}
+
+function formatHistoryTime(date) {
+  const now = new Date();
+  const diff = now - date;
+
+  // Less than a minute
+  if (diff < 60000) {
+    return 'Just now';
+  }
+
+  // Less than an hour
+  if (diff < 3600000) {
+    const minutes = Math.floor(diff / 60000);
+    return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  }
+
+  // Less than a day
+  if (diff < 86400000) {
+    const hours = Math.floor(diff / 3600000);
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  }
+
+  // More than a day
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 // File Operations
@@ -617,10 +802,16 @@ function handleEditorInput() {
   renderPreview();
   updateOutline();
   updateStatusBar();
+  updateLineNumbers();
+  updateCursorPosition();
 
   // Debounced auto-save
   clearTimeout(state.autoSaveTimer);
   state.autoSaveTimer = setTimeout(autoSave, 1000);
+
+  // Debounced history save (save every 30 seconds of inactivity)
+  clearTimeout(state.historyTimer);
+  state.historyTimer = setTimeout(() => saveToHistory(tab), 30000);
 }
 
 // Resize Handle
@@ -757,6 +948,12 @@ function initKeyboardShortcuts() {
       toggleOutline();
     }
 
+    // Ctrl+H - Toggle history
+    if (e.ctrlKey && e.key === 'h') {
+      e.preventDefault();
+      toggleHistory();
+    }
+
     // Ctrl+1 - Edit mode
     if (e.ctrlKey && e.key === '1') {
       e.preventDefault();
@@ -789,8 +986,10 @@ function initEventListeners() {
   document.getElementById('btn-new').addEventListener('click', newFile);
   document.getElementById('btn-open').addEventListener('click', openFile);
   document.getElementById('btn-save').addEventListener('click', saveFile);
+  document.getElementById('btn-history').addEventListener('click', toggleHistory);
   document.getElementById('btn-outline').addEventListener('click', toggleOutline);
   document.getElementById('btn-close-outline').addEventListener('click', toggleOutline);
+  document.getElementById('btn-close-history').addEventListener('click', toggleHistory);
   document.getElementById('btn-theme').addEventListener('click', cycleTheme);
   document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
 
@@ -804,13 +1003,21 @@ function initEventListeners() {
   document.getElementById('btn-mode-preview').addEventListener('click', () => setViewMode('preview'));
 
   // Editor input
-  document.getElementById('editor').addEventListener('input', handleEditorInput);
+  const editor = document.getElementById('editor');
+  editor.addEventListener('input', handleEditorInput);
+
+  // Cursor position tracking
+  editor.addEventListener('click', updateCursorPosition);
+  editor.addEventListener('keyup', updateCursorPosition);
+  editor.addEventListener('select', updateCursorPosition);
+
+  // Sync line numbers scroll
+  editor.addEventListener('scroll', syncLineNumbersScroll);
 
   // Handle tab key in editor
-  document.getElementById('editor').addEventListener('keydown', (e) => {
+  editor.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') {
       e.preventDefault();
-      const editor = e.target;
       const start = editor.selectionStart;
       const end = editor.selectionEnd;
       editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
