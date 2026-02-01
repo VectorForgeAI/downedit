@@ -186,9 +186,14 @@ function initNavScroll() {
   });
 }
 
-// Smooth scroll for anchor links
+// Smooth scroll for anchor links (excludes download buttons)
 function initSmoothScroll() {
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    // Skip download buttons - they get their hrefs updated dynamically
+    if (anchor.id && anchor.id.startsWith('download-')) return;
+    if (anchor.classList.contains('download-card')) return;
+    if (anchor.classList.contains('btn-primary')) return;
+    
     anchor.addEventListener('click', (e) => {
       const href = anchor.getAttribute('href');
       if (href === '#') return;
