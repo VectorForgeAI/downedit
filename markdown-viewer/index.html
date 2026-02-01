@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MarkdownViewer</title>
+  <link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Toolbar -->
+    <header class="toolbar">
+      <div class="toolbar-left">
+        <button id="btn-open" class="toolbar-btn" title="Open File (Ctrl+O)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5z"/>
+          </svg>
+          <span>Open</span>
+        </button>
+        <div class="toolbar-divider"></div>
+        <button id="btn-outline" class="toolbar-btn" title="Toggle Outline (Ctrl+Shift+O)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path fill-rule="evenodd" d="M2 2.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5zM5 3.5A.5.5 0 0 1 5.5 3h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M5.5 7a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1zm0 4a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1zM2 7a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1A.5.5 0 0 0 3 7zm-.5 4.5A.5.5 0 0 1 2 11h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5z"/>
+          </svg>
+          <span>Outline</span>
+        </button>
+      </div>
+      <div class="toolbar-right">
+        <button id="btn-theme" class="toolbar-btn" title="Toggle Theme">
+          <svg id="icon-theme" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8m.5-9.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m0 11a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m5-5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m-11 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m9.743-4.036a.5.5 0 1 1-.707-.707.5.5 0 0 1 .707.707m-7.779 7.779a.5.5 0 1 1-.707-.707.5.5 0 0 1 .707.707m7.072 0a.5.5 0 1 1 .707-.707.5.5 0 0 1-.707.707m-7.779-7.779a.5.5 0 1 1 .707-.707.5.5 0 0 1-.707.707"/>
+          </svg>
+          <span id="theme-label">System</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+      <div id="tabs" class="tabs">
+        <!-- Tabs will be inserted here -->
+      </div>
+    </div>
+
+    <!-- Main content area -->
+    <div class="main-container">
+      <!-- Outline panel -->
+      <aside id="outline-panel" class="outline-panel hidden">
+        <div class="outline-header">
+          <h3>Outline</h3>
+          <button id="btn-close-outline" class="btn-icon" title="Close">x</button>
+        </div>
+        <nav id="outline-content" class="outline-content">
+          <!-- Outline items will be inserted here -->
+        </nav>
+      </aside>
+
+      <!-- Content area -->
+      <main id="content-area" class="content-area">
+        <div id="welcome" class="welcome-screen">
+          <div class="welcome-icon">
+            <svg width="64" height="64" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+              <path d="M4.5 6.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0 2A.5.5 0 0 1 5 8h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5"/>
+            </svg>
+          </div>
+          <h2>Welcome to MarkdownViewer</h2>
+          <p>Open a markdown file to get started</p>
+          <div class="welcome-actions">
+            <button id="btn-open-welcome" class="btn-primary">Open File</button>
+          </div>
+          <div class="welcome-hint">
+            <p>Or drag and drop a .md file here</p>
+            <p class="shortcut-hint">Ctrl+O to open file</p>
+          </div>
+        </div>
+        <div id="viewer" class="markdown-viewer hidden">
+          <!-- Rendered markdown will appear here -->
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

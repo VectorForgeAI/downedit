@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+target/
+build/
+
+# IDE and editor files
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+nul
+
+# Rust/Cargo
+target/
+Cargo.lock
+*.rs.bk
+
+# Tauri
+src-tauri/target/

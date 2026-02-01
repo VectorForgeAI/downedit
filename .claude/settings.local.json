@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm run tauri:*)",
+      "Bash(timeout:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm run dev:*)",
+      "WebFetch(domain:markdownforge.com)"
+    ]
+  }
+}
