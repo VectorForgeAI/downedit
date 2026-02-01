@@ -1434,6 +1434,39 @@ body {
   border-color: #22c55e;
 }
 
+/* Mermaid Diagrams */
+.mermaid-wrapper {
+  position: relative;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg-tertiary);
+}
+
+.mermaid-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.mermaid {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  background: var(--bg-primary);
+  overflow-x: auto;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
 /* Lists */
 .markdown-viewer ul,
 .markdown-viewer ol {

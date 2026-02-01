@@ -8,6 +8,7 @@ import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
 import mammoth from 'mammoth';
 import TurndownService from 'turndown';
+import mermaid from 'mermaid';
 
 // Import common languages for syntax highlighting
 import javascript from 'highlight.js/lib/languages/javascript';
@@ -100,7 +101,19 @@ const marked = new Marked({
 const renderer = {
   code(token) {
     const code = token.text || '';
-    const language = token.lang || '';
+    const language = (token.lang || '').toLowerCase();
+    
+    // Handle Mermaid diagrams
+    if (language === 'mermaid') {
+      const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
+      return `<div class="mermaid-wrapper">
+        <div class="mermaid-header">
+          <span>diagram</span>
+        </div>
+        <div class="mermaid" id="${id}">${escapeHtml(code)}</div>
+      </div>`;
+    }
+    
     const validLanguage = language && hljs.getLanguage(language) ? language : 'plaintext';
     let highlighted;
     try {
@@ -888,7 +901,7 @@ function renderContent() {
   });
 }
 
-function renderPreview() {
+async function renderPreview() {
   const tab = state.tabs.find(t => t.id === state.activeTabId);
   if (!tab) return;
 
@@ -899,6 +912,16 @@ function renderPreview() {
   viewer.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', () => copyCode(btn));
   });
+  
+  // Render any Mermaid diagrams
+  const mermaidElements = viewer.querySelectorAll('.mermaid');
+  if (mermaidElements.length > 0) {
+    try {
+      await mermaid.run({ nodes: mermaidElements });
+    } catch (err) {
+      console.error('Mermaid rendering error:', err);
+    }
+  }
 }
 
 async function copyCode(btn) {
@@ -3039,6 +3062,15 @@ function closeImportMenu() {
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing app...');
+  
+  // Initialize Mermaid
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    fontFamily: 'inherit'
+  });
+  
   initTheme();
   initEventListeners();
   initDragDrop();
