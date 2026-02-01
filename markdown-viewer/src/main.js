@@ -78,7 +78,7 @@ const state = {
   outlineVisible: false,
   historyVisible: false,
   viewMode: 'split', // 'edit', 'split', 'preview'
-  isFullscreen: false,
+  hintsVisible: false,
   autoSaveTimer: null,
   historyTimer: null,
   newFileCounter: 1,
@@ -222,10 +222,15 @@ function setViewMode(mode) {
   document.getElementById(`btn-mode-${mode}`).classList.add('active');
 }
 
-// Fullscreen Management
-function toggleFullscreen() {
-  state.isFullscreen = !state.isFullscreen;
-  document.body.classList.toggle('fullscreen', state.isFullscreen);
+// Hints Panel Management
+function toggleHints() {
+  state.hintsVisible = !state.hintsVisible;
+  document.getElementById('hints-panel').classList.toggle('hidden', !state.hintsVisible);
+}
+
+function closeHints() {
+  state.hintsVisible = false;
+  document.getElementById('hints-panel').classList.add('hidden');
 }
 
 // Tab Management
@@ -1973,11 +1978,6 @@ function initKeyboardShortcuts() {
       setViewMode('preview');
     }
 
-    // F11 - Fullscreen
-    if (e.key === 'F11') {
-      e.preventDefault();
-      toggleFullscreen();
-    }
 
     // Formatting shortcuts (only when editor is focused)
     if (document.activeElement === document.getElementById('editor')) {
@@ -2049,7 +2049,8 @@ function initEventListeners() {
   document.getElementById('btn-close-outline').addEventListener('click', toggleOutline);
   document.getElementById('btn-close-history').addEventListener('click', toggleHistory);
   document.getElementById('btn-theme').addEventListener('click', cycleTheme);
-  document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+  document.getElementById('btn-hints').addEventListener('click', toggleHints);
+  document.getElementById('btn-close-hints').addEventListener('click', closeHints);
 
   // Welcome buttons
   document.getElementById('btn-new-welcome').addEventListener('click', newFile);
