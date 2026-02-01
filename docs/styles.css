@@ -103,6 +103,12 @@ body {
   font-weight: 700;
 }
 
+.logo-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+}
+
 .nav-links {
   display: flex;
   align-items: center;
@@ -329,9 +335,9 @@ body {
   background: var(--border);
 }
 
-.window-dots span:nth-child(1) { background: #64748B; }
-.window-dots span:nth-child(2) { background: #94A3B8; }
-.window-dots span:nth-child(3) { background: var(--accent); }
+.window-dots span:nth-child(1) { background: #ff5f57; }
+.window-dots span:nth-child(2) { background: #ffbd2e; }
+.window-dots span:nth-child(3) { background: #28c840; }
 
 .window-title {
   font-size: 0.85rem;
