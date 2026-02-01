@@ -3437,6 +3437,225 @@ Mermaid code:`;
   return await callAI(aiState.provider, aiState.apiKey, aiState.model, aiState.baseUrl, prompt);
 }
 
+// Summarize text with AI
+async function summarizeText(text) {
+  if (!aiState.isConfigured) {
+    throw new Error('AI is not configured. Please set up AI in settings.');
+  }
+  
+  const prompt = `Summarize the following text in 2-3 concise sentences:
+
+${text}
+
+Summary:`;
+
+  return await callAI(aiState.provider, aiState.apiKey, aiState.model, aiState.baseUrl, prompt);
+}
+
+// Reformat text with AI
+async function reformatText(text) {
+  if (!aiState.isConfigured) {
+    throw new Error('AI is not configured. Please set up AI in settings.');
+  }
+  
+  const prompt = `Improve the formatting and clarity of this markdown text. Fix any grammar issues, improve structure, and make it more readable. Return only the reformatted markdown, no explanation:
+
+${text}
+
+Reformatted:`;
+
+  return await callAI(aiState.provider, aiState.apiKey, aiState.model, aiState.baseUrl, prompt);
+}
+
+// ============================================
+// Context Menu
+// ============================================
+
+let contextMenuSelection = { start: 0, end: 0, text: '' };
+
+function initContextMenu() {
+  const editor = document.getElementById('editor');
+  const contextMenu = document.getElementById('context-menu');
+  
+  // Show context menu on right-click in editor
+  editor.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    
+    // Get selection
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const text = editor.value.substring(start, end);
+    
+    contextMenuSelection = { start, end, text };
+    
+    // Update menu visibility based on AI configuration
+    updateContextMenu();
+    
+    // Position and show menu
+    contextMenu.style.left = `${e.clientX}px`;
+    contextMenu.style.top = `${e.clientY}px`;
+    contextMenu.classList.remove('hidden');
+    
+    // Ensure menu stays within viewport
+    const rect = contextMenu.getBoundingClientRect();
+    if (rect.right > window.innerWidth) {
+      contextMenu.style.left = `${window.innerWidth - rect.width - 10}px`;
+    }
+    if (rect.bottom > window.innerHeight) {
+      contextMenu.style.top = `${window.innerHeight - rect.height - 10}px`;
+    }
+  });
+  
+  // Hide context menu on click elsewhere
+  document.addEventListener('click', () => {
+    contextMenu.classList.add('hidden');
+  });
+  
+  // Hide on escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      contextMenu.classList.add('hidden');
+    }
+  });
+  
+  // Context menu actions
+  document.getElementById('ctx-convert-mermaid').addEventListener('click', handleConvertToMermaid);
+  document.getElementById('ctx-summarize').addEventListener('click', handleSummarize);
+  document.getElementById('ctx-reformat').addEventListener('click', handleReformat);
+}
+
+function updateContextMenu() {
+  const aiSection = document.getElementById('ctx-ai-section');
+  const noAiSection = document.getElementById('ctx-no-ai');
+  
+  if (aiState.isConfigured) {
+    aiSection.classList.remove('hidden');
+    noAiSection.classList.add('hidden');
+    
+    // Enable/disable based on selection
+    const hasSelection = contextMenuSelection.text.length > 0;
+    document.getElementById('ctx-convert-mermaid').disabled = !hasSelection;
+    document.getElementById('ctx-summarize').disabled = !hasSelection;
+    document.getElementById('ctx-reformat').disabled = !hasSelection;
+  } else {
+    aiSection.classList.add('hidden');
+    noAiSection.classList.remove('hidden');
+  }
+}
+
+async function handleConvertToMermaid() {
+  const editor = document.getElementById('editor');
+  const contextMenu = document.getElementById('context-menu');
+  contextMenu.classList.add('hidden');
+  
+  if (!contextMenuSelection.text) {
+    alert('Please select text to convert.');
+    return;
+  }
+  
+  // Show loading indicator
+  const originalText = contextMenuSelection.text;
+  const loadingMsg = '```mermaid\n%% Converting...\n```';
+  replaceEditorSelection(loadingMsg);
+  
+  try {
+    const mermaidCode = await convertASCIIToMermaid(originalText);
+    
+    // Clean up the response (remove any accidental code fences)
+    let cleanCode = mermaidCode.trim();
+    if (cleanCode.startsWith('```mermaid')) {
+      cleanCode = cleanCode.replace(/^```mermaid\n?/, '').replace(/\n?```$/, '');
+    } else if (cleanCode.startsWith('```')) {
+      cleanCode = cleanCode.replace(/^```\n?/, '').replace(/\n?```$/, '');
+    }
+    
+    // Wrap in mermaid code block
+    const result = '```mermaid\n' + cleanCode + '\n```';
+    
+    // Find and replace the loading message
+    const currentContent = editor.value;
+    const loadingIndex = currentContent.indexOf(loadingMsg);
+    if (loadingIndex !== -1) {
+      editor.value = currentContent.substring(0, loadingIndex) + result + currentContent.substring(loadingIndex + loadingMsg.length);
+    }
+    
+    // Update preview
+    handleEditorInput();
+    
+  } catch (err) {
+    console.error('Conversion error:', err);
+    // Restore original text
+    const currentContent = editor.value;
+    const loadingIndex = currentContent.indexOf(loadingMsg);
+    if (loadingIndex !== -1) {
+      editor.value = currentContent.substring(0, loadingIndex) + originalText + currentContent.substring(loadingIndex + loadingMsg.length);
+    }
+    alert('Failed to convert: ' + err.message);
+    handleEditorInput();
+  }
+}
+
+async function handleSummarize() {
+  const contextMenu = document.getElementById('context-menu');
+  contextMenu.classList.add('hidden');
+  
+  if (!contextMenuSelection.text) {
+    alert('Please select text to summarize.');
+    return;
+  }
+  
+  try {
+    const summary = await summarizeText(contextMenuSelection.text);
+    
+    // Insert summary after selection
+    const editor = document.getElementById('editor');
+    const insertPos = contextMenuSelection.end;
+    const before = editor.value.substring(0, insertPos);
+    const after = editor.value.substring(insertPos);
+    
+    editor.value = before + '\n\n> **Summary:** ' + summary.trim() + '\n' + after;
+    handleEditorInput();
+    
+  } catch (err) {
+    console.error('Summarize error:', err);
+    alert('Failed to summarize: ' + err.message);
+  }
+}
+
+async function handleReformat() {
+  const editor = document.getElementById('editor');
+  const contextMenu = document.getElementById('context-menu');
+  contextMenu.classList.add('hidden');
+  
+  if (!contextMenuSelection.text) {
+    alert('Please select text to reformat.');
+    return;
+  }
+  
+  try {
+    const reformatted = await reformatText(contextMenuSelection.text);
+    
+    // Replace selection with reformatted text
+    replaceEditorSelection(reformatted.trim());
+    handleEditorInput();
+    
+  } catch (err) {
+    console.error('Reformat error:', err);
+    alert('Failed to reformat: ' + err.message);
+  }
+}
+
+function replaceEditorSelection(newText) {
+  const editor = document.getElementById('editor');
+  const before = editor.value.substring(0, contextMenuSelection.start);
+  const after = editor.value.substring(contextMenuSelection.end);
+  editor.value = before + newText + after;
+  
+  // Update selection to new text
+  editor.selectionStart = contextMenuSelection.start;
+  editor.selectionEnd = contextMenuSelection.start + newText.length;
+}
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing app...');
@@ -3456,6 +3675,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initResizeHandle();
   initImportListeners();
   initAISettingsListeners();
+  initContextMenu();
   loadAISettings();
   setViewMode('split');
 
