@@ -477,6 +477,171 @@ npm run tauri build
 
 ---
 
+## Deployment Guide
+
+### Overview
+
+down.edit has three deployment targets:
+
+| Target | Location | Deployment Method |
+|--------|----------|-------------------|
+| **Landing Page** | `downedit.com` | GitHub Pages from `/docs` folder |
+| **PWA** | `downedit.com/pwa/` | GitHub Pages from `/docs/pwa` folder |
+| **Desktop Apps** | GitHub Releases | GitHub Actions on tag push |
+
+### GitHub Pages Setup
+
+GitHub Pages is configured to serve from the `/docs` folder on the `main` branch.
+
+**Structure:**
+```
+docs/
+├── index.html      # Landing page
+├── styles.css      # Landing page styles
+├── script.js       # Landing page scripts
+├── favicon.png     # Site favicon
+├── CNAME           # Custom domain (downedit.com)
+└── pwa/            # Built PWA application
+    ├── index.html
+    ├── manifest.json
+    ├── sw.js
+    ├── assets/
+    └── icons/
+```
+
+**Custom Domain:**
+- The `CNAME` file contains `downedit.com`
+- DNS must be configured at your registrar:
+  - A records pointing to GitHub Pages IPs
+  - CNAME record for `www` pointing to `vectorforgeai.github.io`
+
+### Deploying the PWA
+
+The PWA source is in `/pwa`. When you make changes to the PWA, you must rebuild and copy to `/docs/pwa`.
+
+**Steps to deploy PWA changes:**
+
+```powershell
+# 1. Navigate to PWA directory
+cd pwa
+
+# 2. Install dependencies (first time only)
+npm install
+
+# 3. Build for production
+npm run build
+
+# 4. Copy built files to docs/pwa
+Copy-Item -Recurse -Force dist/* ../docs/pwa/
+
+# 5. Return to root and commit
+cd ..
+git add docs/pwa/
+git commit -m "chore: Rebuild PWA"
+git push
+```
+
+**On Linux/macOS:**
+
+```bash
+cd pwa
+npm install
+npm run build
+cp -r dist/* ../docs/pwa/
+cd ..
+git add docs/pwa/
+git commit -m "chore: Rebuild PWA"
+git push
+```
+
+**Important Notes:**
+- Always test locally before deploying: `cd pwa && npm run dev`
+- The PWA will be available at `https://downedit.com/pwa/` after GitHub Pages deploys (1-2 minutes)
+- Service worker caching means users may need to refresh twice to see updates
+
+### Deploying the Landing Page
+
+The landing page files are in `/docs` (not `/docs/pwa`).
+
+**To update the landing page:**
+
+```bash
+# Edit files directly in /docs
+# - index.html (structure)
+# - styles.css (styling)
+# - script.js (functionality)
+
+git add docs/
+git commit -m "Update landing page"
+git push
+```
+
+### Creating a Desktop Release
+
+Desktop releases are automated via GitHub Actions when you push a version tag.
+
+**Steps to create a release:**
+
+```powershell
+# 1. Update version in package.json
+cd markdown-viewer
+# Edit package.json: "version": "1.2.0"
+
+# 2. Commit the version bump
+git add package.json
+git commit -m "chore: Bump version to 1.2.0"
+
+# 3. Create and push the tag
+git tag v1.2.0
+git push origin main
+git push origin v1.2.0
+```
+
+**What happens automatically:**
+1. GitHub Actions builds desktop apps for Windows, macOS, and Linux
+2. Creates a GitHub Release with all artifacts
+3. Release notes include download links and PWA link
+
+**Manual workflow trigger:**
+You can also trigger the release workflow manually from the GitHub Actions tab with a custom version number.
+
+### Release Checklist
+
+Before creating a release:
+
+- [ ] Update version in `markdown-viewer/package.json`
+- [ ] Update version in `pwa/package.json` (if PWA changed)
+- [ ] Rebuild and commit PWA if source changed
+- [ ] Update `DEVELOPMENT.md` progress log
+- [ ] Test desktop app locally: `cd markdown-viewer && npm run tauri dev`
+- [ ] Test PWA locally: `cd pwa && npm run dev`
+- [ ] Commit all changes to `main`
+- [ ] Create and push version tag
+
+### Troubleshooting Deployment
+
+**PWA shows 404:**
+- Ensure `/docs/pwa/index.html` exists
+- Check that files were committed and pushed
+- Wait 1-2 minutes for GitHub Pages to deploy
+
+**PWA not updating for users:**
+- Service worker caches aggressively
+- Users may need to close all tabs and reopen
+- Consider incrementing the cache version in `pwa/public/sw.js`
+
+**Desktop build fails:**
+- Check GitHub Actions logs for errors
+- Ensure Rust and Node.js versions are compatible
+- Verify all dependencies are in `package.json` and `Cargo.toml`
+
+**Landing page changes not visible:**
+- Clear browser cache or use incognito mode
+- Check that changes are in `/docs`, not elsewhere
+- Verify the commit was pushed to `main`
+
+---
+
 ## Progress Log
 
 ### 2026-02-01 - Word Import Feature Complete
@@ -585,4 +750,4 @@ npm run tauri build
 
 ---
 
-*Last Updated: 2026-02-01 - Word Import feature complete*
+*Last Updated: 2026-02-01 - Added Deployment Guide*
