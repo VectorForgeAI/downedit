@@ -7,10 +7,22 @@ const GITHUB_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
 // Detect user's platform
 function detectPlatform() {
   const ua = navigator.userAgent.toLowerCase();
+  
+  // Check for mobile devices first
+  if (/iphone|ipad|ipod/.test(ua)) return 'ios';
+  if (/android/.test(ua)) return 'android';
+  
+  // Desktop platforms
   if (ua.includes('win')) return 'windows';
   if (ua.includes('mac')) return 'macos';
   if (ua.includes('linux')) return 'linux';
   return 'windows'; // default
+}
+
+// Check if mobile device
+function isMobile() {
+  const platform = detectPlatform();
+  return platform === 'ios' || platform === 'android';
 }
 
 // Update platform-specific elements
@@ -18,12 +30,38 @@ function updatePlatformUI(platform) {
   const platformNames = {
     windows: 'Windows',
     macos: 'macOS',
-    linux: 'Linux'
+    linux: 'Linux',
+    ios: 'iPhone/iPad',
+    android: 'Android'
   };
   
   const platformName = document.getElementById('platform-name');
+  const primaryBtn = document.getElementById('download-primary');
+  const btnIcon = primaryBtn?.querySelector('.btn-icon');
+  
   if (platformName) {
     platformName.textContent = platformNames[platform];
+  }
+  
+  // For mobile users, update the primary button to link to PWA
+  if (platform === 'ios' || platform === 'android') {
+    if (primaryBtn) {
+      primaryBtn.href = 'pwa/';
+      if (btnIcon) {
+        btnIcon.textContent = '→';
+      }
+      // Change button text
+      const textSpan = primaryBtn.querySelector('span:last-child');
+      if (textSpan) {
+        textSpan.innerHTML = 'Open Web App';
+      }
+    }
+    
+    // Highlight the PWA download card
+    const pwaCard = document.getElementById('download-pwa');
+    if (pwaCard) {
+      pwaCard.classList.add('highlighted');
+    }
   }
 }
 

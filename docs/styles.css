@@ -679,6 +679,21 @@ body {
   transform: translateY(-4px);
 }
 
+/* Highlighted PWA card for mobile users */
+.download-pwa.highlighted {
+  animation: pulse-glow 2s ease-in-out infinite;
+  order: -1; /* Move to front on mobile */
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px var(--accent-glow), 0 0 40px rgba(168, 85, 247, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px var(--accent-glow), 0 0 60px rgba(168, 85, 247, 0.5);
+  }
+}
+
 .download-note {
   text-align: center;
   color: var(--text-muted);

@@ -2,6 +2,8 @@
 
 Welcome to **down.edit**, a modern Markdown editor for Windows, macOS, and Linux. This guide covers everything you need to know to get the most out of the application.
 
+> **Using iPhone, iPad, or Android?** Check out the [PWA User Guide](PWA_USER_GUIDE.md) for the mobile web app version that works on any device.
+
 ---
 
 ## Table of Contents
