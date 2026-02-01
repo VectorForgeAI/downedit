@@ -87,20 +87,32 @@ async function fetchLatestRelease() {
     const macosAsset = assets.find(a => a.name.toLowerCase().includes('macos') || a.name.toLowerCase().includes('darwin'));
     const linuxAsset = assets.find(a => a.name.toLowerCase().includes('linux'));
     
-    // Update download links
+    // Update download links - add target and download attributes for direct download
     if (windowsAsset) {
       const winLink = document.getElementById('download-windows');
-      if (winLink) winLink.href = windowsAsset.browser_download_url;
+      if (winLink) {
+        winLink.href = windowsAsset.browser_download_url;
+        winLink.setAttribute('target', '_blank');
+        winLink.setAttribute('rel', 'noopener noreferrer');
+      }
     }
     
     if (macosAsset) {
       const macLink = document.getElementById('download-macos');
-      if (macLink) macLink.href = macosAsset.browser_download_url;
+      if (macLink) {
+        macLink.href = macosAsset.browser_download_url;
+        macLink.setAttribute('target', '_blank');
+        macLink.setAttribute('rel', 'noopener noreferrer');
+      }
     }
     
     if (linuxAsset) {
       const linuxLink = document.getElementById('download-linux');
-      if (linuxLink) linuxLink.href = linuxAsset.browser_download_url;
+      if (linuxLink) {
+        linuxLink.href = linuxAsset.browser_download_url;
+        linuxLink.setAttribute('target', '_blank');
+        linuxLink.setAttribute('rel', 'noopener noreferrer');
+      }
     }
     
     // Update primary download button based on platform
@@ -108,6 +120,9 @@ async function fetchLatestRelease() {
     const primaryBtn = document.getElementById('download-primary');
     
     if (primaryBtn) {
+      primaryBtn.setAttribute('target', '_blank');
+      primaryBtn.setAttribute('rel', 'noopener noreferrer');
+      
       if (platform === 'windows' && windowsAsset) {
         primaryBtn.href = windowsAsset.browser_download_url;
       } else if (platform === 'macos' && macosAsset) {
