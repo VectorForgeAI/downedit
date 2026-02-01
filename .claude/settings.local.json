@@ -11,7 +11,8 @@
       "WebFetch(domain:markdownforge.com)",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git merge:*)"
     ]
   }
 }

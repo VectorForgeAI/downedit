@@ -342,12 +342,14 @@ function showWelcome() {
   document.getElementById('editor-container').classList.add('hidden');
   document.getElementById('status-bar').classList.add('hidden');
   document.getElementById('outline-content').innerHTML = '';
+  hideFormattingToolbar();
 }
 
 function showEditorView() {
   document.getElementById('welcome').classList.add('hidden');
   document.getElementById('editor-container').classList.remove('hidden');
   document.getElementById('status-bar').classList.remove('hidden');
+  showFormattingToolbar();
 }
 
 function renderContent() {
@@ -710,6 +712,362 @@ function formatHistoryTime(date) {
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+// ==========================================
+// PHASE III: Formatting Toolbar Functions
+// ==========================================
+
+// Formatting toolbar visibility
+function showFormattingToolbar() {
+  document.getElementById('formatting-toolbar').classList.remove('hidden');
+}
+
+function hideFormattingToolbar() {
+  document.getElementById('formatting-toolbar').classList.add('hidden');
+}
+
+// Text manipulation utilities
+function getEditorSelection() {
+  const editor = document.getElementById('editor');
+  return {
+    start: editor.selectionStart,
+    end: editor.selectionEnd,
+    text: editor.value.substring(editor.selectionStart, editor.selectionEnd),
+    before: editor.value.substring(0, editor.selectionStart),
+    after: editor.value.substring(editor.selectionEnd)
+  };
+}
+
+function setEditorContent(content, selectionStart, selectionEnd) {
+  const editor = document.getElementById('editor');
+  editor.value = content;
+  editor.selectionStart = selectionStart;
+  editor.selectionEnd = selectionEnd;
+  editor.focus();
+  handleEditorInput();
+}
+
+function wrapSelection(prefix, suffix = prefix) {
+  const sel = getEditorSelection();
+  const newContent = sel.before + prefix + sel.text + suffix + sel.after;
+  const newStart = sel.start + prefix.length;
+  const newEnd = sel.end + prefix.length;
+  setEditorContent(newContent, newStart, newEnd);
+}
+
+function insertAtCursor(text) {
+  const sel = getEditorSelection();
+  const newContent = sel.before + text + sel.after;
+  const newPos = sel.start + text.length;
+  setEditorContent(newContent, newPos, newPos);
+}
+
+function insertAtLineStart(prefix) {
+  const editor = document.getElementById('editor');
+  const sel = getEditorSelection();
+
+  // Find the start of the current line
+  let lineStart = sel.start;
+  while (lineStart > 0 && editor.value[lineStart - 1] !== '\n') {
+    lineStart--;
+  }
+
+  // Check if line already has the prefix
+  const lineText = editor.value.substring(lineStart, sel.start);
+  if (lineText.startsWith(prefix)) {
+    // Remove prefix
+    const newContent = editor.value.substring(0, lineStart) +
+                      editor.value.substring(lineStart + prefix.length);
+    setEditorContent(newContent, sel.start - prefix.length, sel.end - prefix.length);
+  } else {
+    // Add prefix
+    const newContent = editor.value.substring(0, lineStart) + prefix + editor.value.substring(lineStart);
+    setEditorContent(newContent, sel.start + prefix.length, sel.end + prefix.length);
+  }
+}
+
+// Formatting functions
+function formatBold() {
+  wrapSelection('**');
+}
+
+function formatItalic() {
+  wrapSelection('*');
+}
+
+function formatStrikethrough() {
+  wrapSelection('~~');
+}
+
+function formatInlineCode() {
+  wrapSelection('`');
+}
+
+function formatHeading(level) {
+  const prefix = '#'.repeat(level) + ' ';
+  const editor = document.getElementById('editor');
+  const sel = getEditorSelection();
+
+  // Find the start of the current line
+  let lineStart = sel.start;
+  while (lineStart > 0 && editor.value[lineStart - 1] !== '\n') {
+    lineStart--;
+  }
+
+  // Find the end of the current line
+  let lineEnd = sel.end;
+  while (lineEnd < editor.value.length && editor.value[lineEnd] !== '\n') {
+    lineEnd++;
+  }
+
+  const lineText = editor.value.substring(lineStart, lineEnd);
+
+  // Remove existing heading prefix if any
+  const headingMatch = lineText.match(/^#{1,6}\s*/);
+  let newLineText = lineText;
+  let adjustment = 0;
+
+  if (headingMatch) {
+    newLineText = lineText.substring(headingMatch[0].length);
+    adjustment = -headingMatch[0].length;
+  }
+
+  // Add new heading prefix
+  newLineText = prefix + newLineText;
+  adjustment += prefix.length;
+
+  const newContent = editor.value.substring(0, lineStart) + newLineText + editor.value.substring(lineEnd);
+  setEditorContent(newContent, sel.start + adjustment, sel.end + adjustment);
+
+  // Close the heading dropdown
+  document.getElementById('heading-menu').classList.add('hidden');
+}
+
+function formatBulletList() {
+  insertAtLineStart('- ');
+}
+
+function formatNumberedList() {
+  insertAtLineStart('1. ');
+}
+
+function formatTaskList() {
+  insertAtLineStart('- [ ] ');
+}
+
+function formatBlockquote() {
+  insertAtLineStart('> ');
+}
+
+function formatHorizontalRule() {
+  const sel = getEditorSelection();
+  const needsNewlineBefore = sel.start > 0 && sel.before[sel.before.length - 1] !== '\n';
+  const hr = (needsNewlineBefore ? '\n' : '') + '\n---\n\n';
+  insertAtCursor(hr);
+}
+
+// Dialog management
+function openDialog(dialogId) {
+  document.getElementById(dialogId).classList.remove('hidden');
+  const firstInput = document.querySelector(`#${dialogId} input`);
+  if (firstInput) {
+    firstInput.focus();
+  }
+}
+
+function closeDialog(dialogId) {
+  const dialog = document.getElementById(dialogId);
+  dialog.classList.add('hidden');
+  // Clear inputs
+  dialog.querySelectorAll('input').forEach(input => {
+    input.value = '';
+  });
+  document.getElementById('editor').focus();
+}
+
+function closeAllDialogs() {
+  document.querySelectorAll('.modal-overlay').forEach(dialog => {
+    dialog.classList.add('hidden');
+    dialog.querySelectorAll('input').forEach(input => {
+      input.value = '';
+    });
+  });
+}
+
+// Link dialog
+function openLinkDialog() {
+  const sel = getEditorSelection();
+  if (sel.text) {
+    document.getElementById('link-text').value = sel.text;
+  }
+  openDialog('link-dialog');
+}
+
+function insertLink() {
+  const text = document.getElementById('link-text').value || 'link text';
+  const url = document.getElementById('link-url').value;
+  const title = document.getElementById('link-title').value;
+
+  if (!url) {
+    document.getElementById('link-url').focus();
+    return;
+  }
+
+  let markdown = `[${text}](${url}`;
+  if (title) {
+    markdown += ` "${title}"`;
+  }
+  markdown += ')';
+
+  const sel = getEditorSelection();
+  if (sel.text) {
+    // Replace selection
+    const newContent = sel.before + markdown + sel.after;
+    setEditorContent(newContent, sel.start, sel.start + markdown.length);
+  } else {
+    insertAtCursor(markdown);
+  }
+
+  closeDialog('link-dialog');
+}
+
+// Image dialog
+function openImageDialog() {
+  const sel = getEditorSelection();
+  if (sel.text) {
+    document.getElementById('image-alt').value = sel.text;
+  }
+  openDialog('image-dialog');
+}
+
+function insertImage() {
+  const alt = document.getElementById('image-alt').value || 'image';
+  const url = document.getElementById('image-url').value;
+  const title = document.getElementById('image-title').value;
+
+  if (!url) {
+    document.getElementById('image-url').focus();
+    return;
+  }
+
+  let markdown = `![${alt}](${url}`;
+  if (title) {
+    markdown += ` "${title}"`;
+  }
+  markdown += ')';
+
+  insertAtCursor(markdown);
+  closeDialog('image-dialog');
+}
+
+// Table dialog
+let tableAlignments = [];
+
+function openTableDialog() {
+  updateTablePreview();
+  openDialog('table-dialog');
+}
+
+function updateTablePreview() {
+  const rows = parseInt(document.getElementById('table-rows').value) || 3;
+  const cols = parseInt(document.getElementById('table-cols').value) || 3;
+
+  // Update alignment controls
+  const alignmentContainer = document.getElementById('table-alignment');
+  alignmentContainer.innerHTML = '';
+  tableAlignments = tableAlignments.slice(0, cols);
+  while (tableAlignments.length < cols) {
+    tableAlignments.push('left');
+  }
+
+  for (let i = 0; i < cols; i++) {
+    const group = document.createElement('div');
+    group.className = 'alignment-group';
+    group.innerHTML = `
+      <span>Col ${i + 1}</span>
+      <button class="alignment-btn ${tableAlignments[i] === 'left' ? 'active' : ''}" data-col="${i}" data-align="left">L</button>
+      <button class="alignment-btn ${tableAlignments[i] === 'center' ? 'active' : ''}" data-col="${i}" data-align="center">C</button>
+      <button class="alignment-btn ${tableAlignments[i] === 'right' ? 'active' : ''}" data-col="${i}" data-align="right">R</button>
+    `;
+    alignmentContainer.appendChild(group);
+  }
+
+  // Add alignment button listeners
+  alignmentContainer.querySelectorAll('.alignment-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const col = parseInt(btn.dataset.col);
+      tableAlignments[col] = btn.dataset.align;
+      updateTablePreview();
+    });
+  });
+
+  // Generate preview
+  const preview = document.getElementById('table-preview');
+  preview.textContent = generateTableMarkdown(rows, cols, tableAlignments);
+}
+
+function generateTableMarkdown(rows, cols, alignments) {
+  const lines = [];
+
+  // Header row
+  const headerCells = [];
+  for (let c = 0; c < cols; c++) {
+    headerCells.push(`Header ${c + 1}`);
+  }
+  lines.push('| ' + headerCells.join(' | ') + ' |');
+
+  // Separator row with alignment
+  const separatorCells = [];
+  for (let c = 0; c < cols; c++) {
+    const align = alignments[c] || 'left';
+    if (align === 'center') {
+      separatorCells.push(':---:');
+    } else if (align === 'right') {
+      separatorCells.push('---:');
+    } else {
+      separatorCells.push('---');
+    }
+  }
+  lines.push('| ' + separatorCells.join(' | ') + ' |');
+
+  // Data rows
+  for (let r = 0; r < rows - 1; r++) {
+    const dataCells = [];
+    for (let c = 0; c < cols; c++) {
+      dataCells.push(`Cell ${r + 1},${c + 1}`);
+    }
+    lines.push('| ' + dataCells.join(' | ') + ' |');
+  }
+
+  return lines.join('\n');
+}
+
+function insertTable() {
+  const rows = parseInt(document.getElementById('table-rows').value) || 3;
+  const cols = parseInt(document.getElementById('table-cols').value) || 3;
+
+  const markdown = '\n' + generateTableMarkdown(rows, cols, tableAlignments) + '\n';
+  insertAtCursor(markdown);
+  closeDialog('table-dialog');
+}
+
+// Code block dialog
+function openCodeDialog() {
+  openDialog('code-dialog');
+}
+
+function insertCodeBlock() {
+  const language = document.getElementById('code-language').value;
+  const codeBlock = '\n```' + language + '\n\n```\n';
+
+  const sel = getEditorSelection();
+  const newContent = sel.before + codeBlock + sel.after;
+  // Position cursor inside the code block
+  const cursorPos = sel.start + 4 + language.length + 1;
+  setEditorContent(newContent, cursorPos, cursorPos);
+
+  closeDialog('code-dialog');
+}
+
 // File Operations
 function newFile() {
   const fileName = `Untitled-${state.newFileCounter++}.md`;
@@ -977,6 +1335,63 @@ function initKeyboardShortcuts() {
       e.preventDefault();
       toggleFullscreen();
     }
+
+    // Formatting shortcuts (only when editor is focused)
+    if (document.activeElement === document.getElementById('editor')) {
+      // Ctrl+B - Bold
+      if (e.ctrlKey && !e.shiftKey && e.key === 'b') {
+        e.preventDefault();
+        formatBold();
+      }
+
+      // Ctrl+I - Italic
+      if (e.ctrlKey && !e.shiftKey && e.key === 'i') {
+        e.preventDefault();
+        formatItalic();
+      }
+
+      // Ctrl+Shift+S - Strikethrough (but not Ctrl+S which is save)
+      if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        formatStrikethrough();
+      }
+
+      // Ctrl+K - Insert link
+      if (e.ctrlKey && !e.shiftKey && e.key === 'k') {
+        e.preventDefault();
+        openLinkDialog();
+      }
+
+      // Ctrl+Shift+I - Insert image
+      if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+        openImageDialog();
+      }
+
+      // Ctrl+Shift+C - Insert code block
+      if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        openCodeDialog();
+      }
+
+      // Ctrl+Q - Blockquote
+      if (e.ctrlKey && !e.shiftKey && e.key === 'q') {
+        e.preventDefault();
+        formatBlockquote();
+      }
+
+      // Ctrl+L - Bullet list
+      if (e.ctrlKey && !e.shiftKey && e.key === 'l') {
+        e.preventDefault();
+        formatBulletList();
+      }
+
+      // Ctrl+Shift+L - Numbered list
+      if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+        e.preventDefault();
+        formatNumberedList();
+      }
+    }
   });
 }
 
@@ -1025,6 +1440,107 @@ function initEventListeners() {
       handleEditorInput();
     }
   });
+
+  // Formatting toolbar buttons
+  initFormattingToolbar();
+}
+
+function initFormattingToolbar() {
+  // Text formatting
+  document.getElementById('fmt-bold').addEventListener('click', formatBold);
+  document.getElementById('fmt-italic').addEventListener('click', formatItalic);
+  document.getElementById('fmt-strikethrough').addEventListener('click', formatStrikethrough);
+  document.getElementById('fmt-code-inline').addEventListener('click', formatInlineCode);
+
+  // Heading dropdown
+  const headingBtn = document.getElementById('fmt-heading');
+  const headingMenu = document.getElementById('heading-menu');
+
+  headingBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    headingMenu.classList.toggle('hidden');
+  });
+
+  headingMenu.querySelectorAll('[data-level]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      formatHeading(parseInt(btn.dataset.level));
+    });
+  });
+
+  // Close heading menu when clicking outside
+  document.addEventListener('click', () => {
+    headingMenu.classList.add('hidden');
+  });
+
+  // Lists
+  document.getElementById('fmt-ul').addEventListener('click', formatBulletList);
+  document.getElementById('fmt-ol').addEventListener('click', formatNumberedList);
+  document.getElementById('fmt-task').addEventListener('click', formatTaskList);
+
+  // Block elements
+  document.getElementById('fmt-quote').addEventListener('click', formatBlockquote);
+  document.getElementById('fmt-hr').addEventListener('click', formatHorizontalRule);
+
+  // Insert elements
+  document.getElementById('fmt-link').addEventListener('click', openLinkDialog);
+  document.getElementById('fmt-image').addEventListener('click', openImageDialog);
+  document.getElementById('fmt-table').addEventListener('click', openTableDialog);
+  document.getElementById('fmt-code-block').addEventListener('click', openCodeDialog);
+
+  // Dialog event listeners
+  initDialogs();
+}
+
+function initDialogs() {
+  // Close buttons for all modals
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const modal = btn.closest('.modal-overlay');
+      if (modal) {
+        closeDialog(modal.id);
+      }
+    });
+  });
+
+  // Close on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeDialog(overlay.id);
+      }
+    });
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeAllDialogs();
+    }
+  });
+
+  // Link dialog
+  document.getElementById('link-insert').addEventListener('click', insertLink);
+  document.getElementById('link-url').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      insertLink();
+    }
+  });
+
+  // Image dialog
+  document.getElementById('image-insert').addEventListener('click', insertImage);
+  document.getElementById('image-url').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      insertImage();
+    }
+  });
+
+  // Table dialog
+  document.getElementById('table-insert').addEventListener('click', insertTable);
+  document.getElementById('table-rows').addEventListener('input', updateTablePreview);
+  document.getElementById('table-cols').addEventListener('input', updateTablePreview);
+
+  // Code dialog
+  document.getElementById('code-insert').addEventListener('click', insertCodeBlock);
 }
 
 // Initialize App

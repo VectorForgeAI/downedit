@@ -127,36 +127,36 @@ markdown-viewer/
 
 ---
 
-## Phase III: Formatting Toolbar & Helpers
+## Phase III: Formatting Toolbar & Helpers ✅ COMPLETE
 
 ### Features
 
 | ID | Feature | Description | Status |
 |----|---------|-------------|--------|
-| F3.1 | Formatting Toolbar | Bold, italic, heading, list, quote buttons | ⬜ Pending |
-| F3.2 | Link Builder | Dialog to insert markdown links | ⬜ Pending |
-| F3.3 | Image Embedder | Dialog to insert images (local/URL) | ⬜ Pending |
-| F3.4 | Table Generator | Visual table builder interface | ⬜ Pending |
-| F3.5 | Task List Helper | Quick task list insertion | ⬜ Pending |
-| F3.6 | TOC Generator | Auto-generate table of contents | ⬜ Pending |
-| F3.7 | Code Block Helper | Insert code block with language picker | ⬜ Pending |
-| F3.8 | Markdown Beautifier | Clean up and format markdown | ⬜ Pending |
+| F3.1 | Formatting Toolbar | Bold, italic, heading, list, quote buttons | ✅ Complete |
+| F3.2 | Link Builder | Dialog to insert markdown links | ✅ Complete |
+| F3.3 | Image Embedder | Dialog to insert images (local/URL) | ✅ Complete |
+| F3.4 | Table Generator | Visual table builder interface | ✅ Complete |
+| F3.5 | Task List Helper | Quick task list insertion | ✅ Complete |
+| F3.6 | TOC Generator | Auto-generate table of contents | ⬜ Deferred |
+| F3.7 | Code Block Helper | Insert code block with language picker | ✅ Complete |
+| F3.8 | Markdown Beautifier | Clean up and format markdown | ⬜ Deferred |
 
 ### Tasks
 
 | ID | Task | Description | Status |
 |----|------|-------------|--------|
-| T3.1 | Formatting Toolbar UI | Button bar with formatting icons | ⬜ Pending |
-| T3.2 | Text Selection Formatting | Wrap selected text with markdown syntax | ⬜ Pending |
-| T3.3 | Link Dialog | Modal for URL, text, title input | ⬜ Pending |
-| T3.4 | Image Dialog | Modal for image URL/file selection | ⬜ Pending |
-| T3.5 | Table Generator UI | Spreadsheet-like table builder | ⬜ Pending |
-| T3.6 | Table Alignment Controls | Left/center/right column alignment | ⬜ Pending |
-| T3.7 | CSV Import for Tables | Import CSV to markdown table | ⬜ Pending |
-| T3.8 | TOC Generation Logic | Parse headings and generate TOC | ⬜ Pending |
-| T3.9 | Code Block Insertion | Language selector + code block template | ⬜ Pending |
-| T3.10 | Beautifier Logic | Normalize spacing, indentation, styles | ⬜ Pending |
-| T3.11 | Formatting Shortcuts | Ctrl+B, Ctrl+I, Ctrl+K, etc. | ⬜ Pending |
+| T3.1 | Formatting Toolbar UI | Button bar with formatting icons | ✅ Complete |
+| T3.2 | Text Selection Formatting | Wrap selected text with markdown syntax | ✅ Complete |
+| T3.3 | Link Dialog | Modal for URL, text, title input | ✅ Complete |
+| T3.4 | Image Dialog | Modal for image URL/file selection | ✅ Complete |
+| T3.5 | Table Generator UI | Spreadsheet-like table builder | ✅ Complete |
+| T3.6 | Table Alignment Controls | Left/center/right column alignment | ✅ Complete |
+| T3.7 | CSV Import for Tables | Import CSV to markdown table | ⬜ Deferred |
+| T3.8 | TOC Generation Logic | Parse headings and generate TOC | ⬜ Deferred |
+| T3.9 | Code Block Insertion | Language selector + code block template | ✅ Complete |
+| T3.10 | Beautifier Logic | Normalize spacing, indentation, styles | ⬜ Deferred |
+| T3.11 | Formatting Shortcuts | Ctrl+B, Ctrl+I, Ctrl+K, etc. | ✅ Complete |
 
 ### Technical Specifications
 
