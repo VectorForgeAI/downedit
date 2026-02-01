@@ -104,8 +104,12 @@ body {
 }
 
 .logo-img {
-  height: 28px;
+  height: 40px;
   width: auto;
+}
+
+.footer-brand .logo-img {
+  height: 32px;
 }
 
 .nav-links {
