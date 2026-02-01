@@ -2438,12 +2438,60 @@ async function loadFile(filePath) {
   }
 
   try {
-    const content = await invoke('read_file', { path: filePath });
     const fileName = await invoke('get_file_name', { path: filePath });
-    createTab(filePath, fileName, content, false);
+    
+    // Check if it's a Word document
+    if (filePath.toLowerCase().endsWith('.docx') || filePath.toLowerCase().endsWith('.doc')) {
+      // Convert Word document to Markdown
+      await loadWordFile(filePath, fileName);
+    } else {
+      // Regular text file
+      const content = await invoke('read_file', { path: filePath });
+      createTab(filePath, fileName, content, false);
+    }
   } catch (err) {
     console.error('Error loading file:', err);
     alert(`Failed to open file: ${err}`);
+  }
+}
+
+// Load and convert Word document
+async function loadWordFile(filePath, originalFileName) {
+  try {
+    showImportProgress('Reading Word document...');
+
+    // Read the file as base64
+    const base64Data = await invoke('read_file_as_base64', { path: filePath });
+
+    // Convert base64 to ArrayBuffer
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const arrayBuffer = bytes.buffer;
+
+    showImportProgress('Converting to Markdown...');
+
+    // Convert to Markdown
+    const options = { preserveImages: true };
+    const result = await convertWordToMarkdown(arrayBuffer, options);
+
+    // Create new filename with .md extension
+    const newFileName = originalFileName.replace(/\.(docx?|doc)$/i, '.md');
+
+    // Create a new tab with the converted content (unsaved, no file path)
+    createTab(null, newFileName, result.markdown, true);
+
+    hideImportProgress();
+
+    if (result.warnings.length > 0) {
+      console.log('Conversion warnings:', result.warnings);
+    }
+  } catch (err) {
+    hideImportProgress();
+    console.error('Error converting Word document:', err);
+    alert(`Failed to open Word document: ${err}`);
   }
 }
 

@@ -39,9 +39,10 @@ async fn open_file_dialog(app: tauri::AppHandle) -> Result<Vec<String>, String> 
 
     app.dialog()
         .file()
+        .add_filter("All Supported", &["md", "markdown", "txt", "docx"])
         .add_filter("Markdown", &["md", "markdown"])
+        .add_filter("Word Documents", &["docx"])
         .add_filter("Text", &["txt"])
-        .add_filter("All Supported", &["md", "markdown", "txt"])
         .pick_files(move |file_paths| {
             let paths = file_paths
                 .map(|paths| {
