@@ -249,7 +249,7 @@ jobs:
           ls -la release/
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           name: down.edit v${{ steps.version.outputs.version }}
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', steps.version.outputs.version) || github.ref_name }}
