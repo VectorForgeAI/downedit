@@ -11,8 +11,8 @@
     "serve": "npx serve dist"
   },
   "dependencies": {
-    "docx": "^9.5.1",
-    "highlight.js": "^11.11.1",
+    "docx": "^9.7.1",
+    "highlight.js": "^11.12.0",
     "jspdf": "^4.2.1",
     "marked": "^17.0.1"
   },
