@@ -10,7 +10,7 @@ on:
 jobs:
   gitleaks:
     name: secrets in history
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, nkrypt-build]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,7 +30,7 @@ jobs:
     # OSV-Scanner via official Docker image. No install dance, no GHAS
     # dependency, no SARIF upload. Findings surface in the job log.
     name: OSV-Scanner
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, nkrypt-build]
     container:
       image: ghcr.io/google/osv-scanner:latest
     steps:
