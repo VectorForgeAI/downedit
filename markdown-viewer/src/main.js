@@ -3051,4 +3051,24 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!loadAutoSave()) {
     showWelcome();
   }
+
+  openLaunchFiles();
 });
+
+// Open files passed by Windows when a .md file is double-clicked
+async function openLaunchFiles() {
+  try {
+    const files = await invoke('get_launch_files');
+    for (const filePath of files) {
+      await loadFile(filePath);
+    }
+    // Second launch while the app is already running
+    await listen('open-files', async (event) => {
+      for (const filePath of event.payload || []) {
+        await loadFile(filePath);
+      }
+    });
+  } catch (err) {
+    console.error('Error opening launch files:', err);
+  }
+}

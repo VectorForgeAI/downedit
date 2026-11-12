@@ -2,6 +2,7 @@ use std::fs;
 use std::path::Path;
 use std::sync::mpsc;
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+use tauri::{Emitter, Manager};
 use base64::{Engine as _, engine::general_purpose};
 
 // Read a file and return its content
@@ -179,9 +180,39 @@ fn read_image_as_base64(path: &str) -> Result<String, String> {
     Ok(format!("data:{};base64,{}", mime_type, base64_data))
 }
 
+// Files passed on the command line when the app was launched (double-click in Explorer)
+fn files_from_args(args: &[String]) -> Vec<String> {
+    args.iter()
+        .skip(1)
+        .filter(|a| !a.starts_with('-') && Path::new(a.as_str()).is_file())
+        .cloned()
+        .collect()
+}
+
+#[tauri::command]
+fn get_launch_files() -> Vec<String> {
+    let args: Vec<String> = std::env::args().collect();
+    files_from_args(&args)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
+            // A second launch (double-click while running): hand its files to this window
+            let files: Vec<String> = files_from_args(&args)
+                .into_iter()
+                .map(|f| {
+                    let p = Path::new(&f);
+                    if p.is_absolute() { f } else { Path::new(&cwd).join(p).to_string_lossy().to_string() }
+                })
+                .collect();
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.unminimize();
+                let _ = w.set_focus();
+            }
+            let _ = app.emit("open-files", files);
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -196,7 +227,8 @@ pub fn run() {
             open_image_dialog,
             read_image_as_base64,
             open_word_file_dialog,
-            read_file_as_base64
+            read_file_as_base64,
+            get_launch_files
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
