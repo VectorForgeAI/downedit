@@ -14,7 +14,7 @@ on:
 jobs:
   # Build PWA and deploy to GitHub Pages
   build-pwa:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, nkrypt-build]
     permissions:
       contents: read
       pages: write
@@ -84,7 +84,7 @@ jobs:
 
   deploy-pwa:
     needs: build-pwa
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, nkrypt-build]
     permissions:
       pages: write
       id-token: write
